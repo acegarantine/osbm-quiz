@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ONE SECOND BEFORE MIDNIGHT — FIELD ASSESSMENT</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Noto+Sans+JP:wght@400;700;900&display=swap');
+
+  :root {
+    --red: #E8001C;
+    --red-dark: #9B0013;
+    --red-glow: rgba(232,0,28,0.3);
+    --white: #F0F0F0;
+    --gray: #888;
+    --gray-dark: #333;
+    --black: #0A0A0A;
+    --black2: #111;
+    --black3: #1A1A1A;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.4;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      -55deg, transparent, transparent 40px,
+      rgba(232,0,28,0.015) 40px, rgba(232,0,28,0.015) 41px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .screen {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px;
+  }
+  .screen.active { display: flex; }
+
+  .corner-tl, .corner-br {
+    position: fixed; width: 80px; height: 80px; z-index: 2; pointer-events: none;
+  }
+  .corner-tl { top:0; left:0; border-top:2px solid var(--red); border-left:2px solid var(--red); }
+  .corner-br { bottom:0; right:0; border-bottom:2px solid var(--red); border-right:2px solid var(--red); }
+
+  .scanline {
+    position: fixed; top:0; left:0; right:0; height:2px;
+    background: linear-gradient(90deg, transparent, var(--red), transparent);
+    opacity: 0.6; animation: scan 4s linear infinite; z-index:3; pointer-events:none;
+  }
+  @keyframes scan { 0%{top:0} 100%{top:100vh} }
+
+  /* ── TITLE ── */
+  .title-tag { font-size:10px; letter-spacing:4px; color:var(--red); text-transform:uppercase; margin-bottom:16px; opacity:0; animation:fadeUp .6s ease forwards .2s; }
+  .title-main { font-family:'Bebas Neue',sans-serif; font-size:clamp(42px,10vw,80px); letter-spacing:6px; line-height:.9; text-align:center; color:var(--white); text-shadow:4px 4px 0 var(--red-dark),0 0 40px var(--red-glow); opacity:0; animation:fadeUp .6s ease forwards .4s; }
+  .title-main span { color:var(--red); }
+  .title-sub { font-size:10px; letter-spacing:8px; color:var(--gray); margin-top:12px; text-transform:uppercase; opacity:0; animation:fadeUp .6s ease forwards .6s; }
+  .title-divider { width:100%; max-width:320px; height:1px; background:linear-gradient(90deg,transparent,var(--red),transparent); margin:28px 0; opacity:0; animation:fadeUp .6s ease forwards .7s; }
+  .title-desc { font-size:11px; line-height:1.9; color:var(--gray); text-align:center; max-width:280px; letter-spacing:1px; opacity:0; animation:fadeUp .6s ease forwards .8s; }
+  .title-desc em { color:var(--white); font-style:normal; }
+  .title-progress { margin-top:16px; font-size:9px; letter-spacing:3px; color:var(--gray-dark); text-align:center; opacity:0; animation:fadeUp .6s ease forwards .9s; }
+  .title-progress em { color:var(--red); font-style:normal; }
+  .start-btn { margin-top:28px; padding:14px 48px; background:var(--red); color:var(--white); font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:6px; border:none; cursor:pointer; clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%); transition:background .15s,transform .1s; opacity:0; animation:fadeUp .6s ease forwards 1s; }
+  .start-btn:hover { background:#FF0020; transform:scale(1.03); }
+  .start-btn:active { transform:scale(.98); }
+  .start-btn:disabled { background:var(--gray-dark); color:var(--gray); cursor:default; transform:none; }
+  .title-warning { margin-top:16px; font-size:9px; color:var(--gray-dark); letter-spacing:2px; text-align:center; opacity:0; animation:fadeUp .4s ease forwards 1.2s; }
+
+  /* ── QUIZ ── */
+  .quiz-header { width:100%; max-width:480px; display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+  .q-counter { font-size:11px; letter-spacing:3px; color:var(--red); }
+  .q-counter span { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--white); }
+  .progress-bar { flex:1; margin:0 16px; height:2px; background:var(--gray-dark); overflow:hidden; }
+  .progress-fill { height:100%; background:var(--red); transition:width .4s ease; box-shadow:0 0 8px var(--red); }
+  .score-display { font-size:10px; letter-spacing:2px; color:var(--gray); }
+  .score-display span { color:var(--white); font-family:'Bebas Neue',sans-serif; font-size:18px; }
+
+  .q-card { width:100%; max-width:480px; background:var(--black2); border:1px solid var(--gray-dark); border-left:3px solid var(--red); padding:24px; animation:slideIn .35s ease forwards; }
+  @keyframes slideIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+
+  .q-category { font-size:9px; letter-spacing:4px; color:var(--red); text-transform:uppercase; margin-bottom:12px; }
+  .q-text { font-family:'Share Tech Mono',monospace; font-size:clamp(13px,3.5vw,15px); line-height:1.7; color:var(--white); margin-bottom:20px; letter-spacing:.5px; }
+  .q-multi-hint { font-size:9px; letter-spacing:3px; color:var(--gray); margin-bottom:14px; min-height:14px; }
+
+  .options-grid { display:flex; flex-direction:column; gap:10px; }
+  .option-btn { display:flex; align-items:flex-start; gap:14px; padding:14px 16px; background:transparent; border:1px solid var(--gray-dark); color:var(--white); font-family:'Share Tech Mono',monospace; font-size:13px; text-align:left; cursor:pointer; transition:border-color .15s,background .15s; line-height:1.5; letter-spacing:.5px; clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%); }
+  .option-btn:hover:not(:disabled) { border-color:var(--red); background:rgba(232,0,28,.08); }
+  .option-letter { font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--red); line-height:1; min-width:16px; margin-top:1px; }
+  .option-btn.correct { border-color:#00FF88; background:rgba(0,255,136,.08); }
+  .option-btn.correct .option-letter { color:#00FF88; }
+  .option-btn.wrong { border-color:var(--red); background:rgba(232,0,28,.12); opacity:.7; }
+  .option-btn.missed { border-color:#00FF88; background:rgba(0,255,136,.05); opacity:.6; }
+  .option-btn.missed .option-letter { color:#00FF88; }
+  .option-btn:disabled { cursor:default; }
+
+  .feedback-box { margin-top:16px; padding:14px 16px; background:var(--black3); border-left:3px solid var(--red); font-size:11px; line-height:1.8; color:var(--gray); letter-spacing:.5px; display:none; }
+  .feedback-box.show { display:block; animation:fadeUp .3s ease; }
+  .feedback-box.correct-fb { border-left-color:#00FF88; }
+  .feedback-box strong { color:var(--white); }
+
+  .next-btn { margin-top:20px; width:100%; padding:14px; background:var(--black3); border:1px solid var(--red); color:var(--red); font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:6px; cursor:pointer; transition:background .15s,color .15s; display:none; clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%); }
+  .next-btn.show { display:block; animation:fadeUp .3s ease; }
+  .next-btn:hover { background:var(--red); color:var(--white); }
+
+  /* ── RESULT ── */
+  .result-tag { font-size:10px; letter-spacing:5px; color:var(--red); margin-bottom:12px; animation:fadeUp .5s ease forwards; }
+  .result-grade { font-family:'Bebas Neue',sans-serif; font-size:clamp(80px,20vw,140px); line-height:1; color:var(--white); text-shadow:6px 6px 0 var(--red-dark),0 0 60px var(--red-glow); opacity:0; animation:fadeUp .5s ease forwards .2s; }
+  .result-score-line { font-size:12px; letter-spacing:4px; color:var(--gray); margin-top:4px; opacity:0; animation:fadeUp .5s ease forwards .3s; }
+  .result-score-line em { color:var(--white); font-style:normal; font-family:'Bebas Neue',sans-serif; font-size:20px; }
+  .result-divider { width:100%; max-width:320px; height:1px; background:linear-gradient(90deg,transparent,var(--red),transparent); margin:24px 0; opacity:0; animation:fadeUp .5s ease forwards .4s; }
+  .result-text { font-size:11px; line-height:2; color:var(--gray); text-align:center; max-width:300px; letter-spacing:1px; opacity:0; animation:fadeUp .5s ease forwards .5s; }
+  .result-text strong { color:var(--red); font-weight:normal; }
+  .result-text em { color:var(--white); font-style:normal; }
+  .result-remaining { margin-top:16px; font-size:9px; letter-spacing:3px; color:var(--gray-dark); text-align:center; opacity:0; animation:fadeUp .5s ease forwards .6s; }
+  .result-remaining em { color:var(--gray); font-style:normal; }
+  .result-btns { display:flex; flex-direction:column; gap:10px; margin-top:28px; width:100%; max-width:300px; opacity:0; animation:fadeUp .5s ease forwards .7s; }
+  .continue-btn { padding:13px 40px; background:transparent; border:1px solid var(--red); color:var(--red); font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:5px; cursor:pointer; clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%); transition:background .15s,color .15s; text-align:center; }
+  .continue-btn:hover { background:var(--red); color:var(--white); }
+  .reset-btn { padding:10px 40px; background:transparent; border:1px solid var(--gray-dark); color:var(--gray-dark); font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:3px; cursor:pointer; clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%); transition:border-color .15s,color .15s; text-align:center; }
+  .reset-btn:hover { border-color:var(--gray); color:var(--gray); }
+  .skip-btn { padding:10px 40px; background:transparent; border:1px solid var(--gray-dark); color:var(--gray-dark); font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:3px; cursor:pointer; clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%); transition:border-color .15s,color .15s; text-align:center; }
+  .skip-btn:hover { border-color:var(--gray); color:var(--gray); }
+
+  /* ── MODAL ── */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:200; align-items:center; justify-content:center; }
+  .modal-overlay.active { display:flex; }
+  .modal-box { background:var(--black2); border:1px solid var(--red); padding:32px 28px; max-width:280px; width:90%; text-align:center; }
+  .modal-text { font-size:11px; letter-spacing:2px; color:var(--white); line-height:2; margin-bottom:24px; }
+  .modal-btns { display:flex; gap:12px; justify-content:center; }
+  .modal-confirm { padding:10px 24px; background:var(--red); border:none; color:var(--white); font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:4px; cursor:pointer; clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%); }
+  .modal-confirm:hover { background:#FF0020; }
+  .modal-return { padding:10px 24px; background:transparent; border:1px solid var(--gray-dark); color:var(--gray-dark); font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:4px; cursor:pointer; clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%); }
+  .modal-return:hover { border-color:var(--gray); color:var(--gray); }
+
+  /* ── CLEARED ── */
+  .cleared-icon { font-family:'Bebas Neue',sans-serif; font-size:clamp(60px,15vw,100px); color:var(--red); text-shadow:4px 4px 0 var(--red-dark),0 0 40px var(--red-glow); letter-spacing:8px; opacity:0; animation:fadeUp .6s ease forwards .2s; }
+  .cleared-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(28px,7vw,48px); letter-spacing:6px; color:var(--white); margin-top:8px; opacity:0; animation:fadeUp .6s ease forwards .4s; }
+  .cleared-text { font-size:11px; line-height:2; color:var(--gray); text-align:center; max-width:300px; letter-spacing:1px; margin-top:20px; opacity:0; animation:fadeUp .6s ease forwards .6s; }
+  .cleared-text em { color:var(--white); font-style:normal; }
+  .cleared-btns { display:flex; flex-direction:column; gap:10px; margin-top:28px; width:100%; max-width:300px; opacity:0; animation:fadeUp .6s ease forwards .8s; }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+
+<div class="corner-tl"></div>
+<div class="corner-br"></div>
+<div class="scanline"></div>
+
+<!-- TITLE -->
+<div class="screen active" id="title-screen">
+  <div class="title-tag">// CLASSIFIED — LEVEL 4 RESTRICTED</div>
+  <div class="title-main">ONE SECOND<br><span>BEFORE</span><br>MIDNIGHT</div>
+  <div class="title-sub">Field Assessment Protocol</div>
+  <div class="title-divider"></div>
+  <div class="title-desc">
+    You have been granted access to<br>
+    <em>classified operational documents.</em><br><br>
+    Read them carefully.<br><br>
+    Answer all 60 questions and there is<br>
+    a tiny surprise waiting for you.
+  </div>
+  <div class="title-progress" id="title-progress"></div>
+  <button class="start-btn" id="start-btn" onclick="startQuiz()">BEGIN ASSESSMENT</button>
+  <div class="title-warning">// 10 QUESTIONS SELECTED AT RANDOM — DOCUMENTS REQUIRED //</div>
+</div>
+
+<!-- QUIZ -->
+<div class="screen" id="quiz-screen">
+  <div class="quiz-header">
+    <div class="q-counter">Q<span id="q-num">1</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="score-display">SCORE <span id="score-now">0</span></div>
+  </div>
+  <div class="q-card" id="q-card">
+    <div class="q-category" id="q-category"></div>
+    <div class="q-text" id="q-text"></div>
+    <div class="q-multi-hint" id="q-multi-hint"></div>
+    <div class="options-grid" id="options-grid"></div>
+    <div class="feedback-box" id="feedback-box"></div>
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">NEXT →</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-text">Are you sure you want to proceed?</div>
+    <div class="modal-btns">
+      <button class="modal-confirm" id="modal-confirm">Confirm</button>
+      <button class="modal-return" onclick="closeModal()">Return</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div class="screen" id="result-screen">
+  <div class="result-tag">// ASSESSMENT COMPLETE</div>
+  <div class="result-grade" id="result-grade">B</div>
+  <div class="result-score-line">SCORE: <em id="result-score">0</em> / <em id="result-total">10</em></div>
+  <div class="result-divider"></div>
+  <div class="result-text" id="result-text"></div>
+  <div class="result-remaining" id="result-remaining"></div>
+  <div class="result-btns">
+    <button class="continue-btn" id="continue-btn">NEXT ROUND →</button>
+    <button class="skip-btn" id="skip-btn" onclick="openModal('skip')">SKIP EVERYTHING →</button>
+    <button class="reset-btn" onclick="openModal('reset')">↺ RESET ALL PROGRESS</button>
+  </div>
+</div>
+
+<!-- CLEARED -->
+<div class="screen" id="cleared-screen">
+  <div class="cleared-icon">✓</div>
+  <div class="cleared-title">BANK CLEARED</div>
+  <div class="result-divider" style="opacity:1;animation:none;"></div>
+  <div class="cleared-text">
+    You have answered all 60 questions.<br><br>
+    It seems like you put effort into answering all the questions.<br>
+    As a reward, you can have the artist's email<br>
+    to talk more about the game.<br><br>
+    <em>acegarantine@berkeley.edu</em><br><br>
+    (Hint: it's the artist's first name + berkeley.edu)
+  </div>
+  <div class="cleared-btns">
+    <button class="reset-btn" onclick="openModal('reset')" style="font-size:16px;letter-spacing:4px;border-color:var(--gray);color:var(--gray);">↺ RESET AND START OVER</button>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'osbm_answered_v1';
+const QUESTIONS_PER_ROUND = 10;
+
+const QUESTIONS = [
+
+  // ── A-1  CHARACTER TRAITS & SKILLS ──
+  { id:'q001', category:'CHARACTERS — TRAITS & SKILLS',
+    text:"In combat, what is Garand's core contribution as Commander?",
+    options:["Dealing the highest single-round damage output in the squad","Improving overall squad efficiency through tactical directives, reducing resource expenditure","Absorbing damage on the front line to protect other members","Providing long-range precision fire support"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> Garand's value lies in making the whole squad function better — not in being the hardest hitter. As Commander, Garand improves overall squad efficiency through analysis and tactical directives, serving as the squad's coordination core." },
+
+  { id:'q002', category:'CHARACTERS — TRAITS & SKILLS',
+    text:"Ace tends to withdraw when the situation turns unfavorable. True or false?",
+    options:["True","False"],
+    correct:[0], multi:false,
+    feedback:"<strong>A — True.</strong> As the embodiment of Awareness, Ace has exceptionally strong perceptual abilities and tends toward caution and retreat when the situation is unclear or unfavorable. This is the cost of Awareness as a psychological function: perceived threats sometimes exceed actual ones, leading to excessive caution." },
+
+  { id:'q003', category:'CHARACTERS — TRAITS & SKILLS',
+    text:"Snow is usually the first member of the squad to go through the door. True or false?",
+    options:["True","False"],
+    correct:[0], multi:false,
+    feedback:"<strong>A — True.</strong> Snow is the designated Breacher — 'the one who goes first.' Breaching, entry, and immediate room clearance are the core of Snow's combat role." },
+
+  { id:'q004', category:'CHARACTERS — TRAITS & SKILLS',
+    text:"Among the four squad members, what is Xiao Ru's most distinctive responsibility?",
+    options:["Dealing the highest single-target damage in combat","Maintaining the squad's Spirit resource and emotional cohesion","Scouting enemy positions and providing early warning","Breaking through enemy lines on the front"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> Xiao Ru is the squad's emotional center and Spirit coordinator — a function none of the other three can replace. As the embodiment of Connection, Xiao Ru holds the squad's internal bonds together and ensures the team does not collapse under pressure." },
+
+  { id:'q005', category:'CHARACTERS — TRAITS & SKILLS',
+    text:"Which squad member's role is to keep the others alive — not to hit the hardest?",
+    options:["Snow","Garand","Xiao Ru","Ace"],
+    correct:[2], multi:false,
+    feedback:"<strong>C — Xiao Ru.</strong> Xiao Ru is the medic. The core responsibility is team survival and cohesion, not combat output. The other three each have their combat specialties; Xiao Ru's value is in making sure those members can keep fighting." },
+
+  { id:'q006', category:'CHARACTERS — TRAITS & SKILLS',
+    text:"Which description correctly distinguishes Garand's and Ace's core functions?",
+    options:["Garand perceives threats; Ace analyzes the situation","Garand provides logical analysis and tactical efficiency; Ace provides perceptual data and threat early warning","Their functions are identical — the only difference is weapon range","Garand attacks; Ace defends"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> Garand (Rationality) and Ace (Awareness) are natural intelligence partners — one provides logical analysis, the other provides perceptual data. Their collaboration forms the squad's core intelligence function, but their roles are clearly distinct." },
+
+  { id:'q007', category:'CHARACTERS — TRAITS & SKILLS',
+    text:"Among the four squad members, who relies most on logic and analysis when making decisions — sometimes to the point of seeming cold?",
+    options:["Snow","Xiao Ru","Garand","Ace"],
+    correct:[2], multi:false,
+    feedback:"<strong>C — Garand.</strong> Garand represents Rationality — logic, history, pessimistic optimism. Garand's decisions are grounded in analysis with efficiency as the priority. This trait is enormously valuable in a crisis, but can sometimes make Garand seem emotionally disconnected from the rest of the squad." },
+
+  { id:'q008', category:'CHARACTERS — TRAITS & SKILLS',
+    text:"Among the four squad members, who cares most about the emotional bonds between members and treats maintaining communication and cohesion as a core responsibility?",
+    options:["Garand","Ace","Snow","Xiao Ru"],
+    correct:[3], multi:false,
+    feedback:"<strong>D — Xiao Ru.</strong> Xiao Ru represents Connection — bonds, community, anti-isolation. Maintaining the squad's internal emotional communication and cohesion is Xiao Ru's core drive, which is why Xiao Ru naturally takes a mediating role when members are in conflict." },
+
+  // ── A-2  WEAPONS & ARMOR ──
+  { id:'q009', category:'CHARACTERS — WEAPONS & ARMOR',
+    text:"Snow carries a carbine and a shotgun rather than a sniper rifle or assault rifle. What does this weapon choice reflect?",
+    options:["Snow is responsible for suppressing enemies at long range, creating opportunities for other members to advance","Snow's combat happens at the closest possible distance — breaching, entering, immediate room clearance","Snow doesn't care about weapons and grabbed these at random","Snow's weapon choice is to reduce load and maintain movement speed"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> Snow is the Breacher; the combat range is close contact distance. Snow's carbine and shotgun are both close-range, high-impact weapons that fully serve the breaching and room-clearing role." },
+
+  { id:'q010', category:'CHARACTERS — WEAPONS & ARMOR',
+    text:"Ace carries the M110 SASS sniper rifle as a primary weapon. Which of Ace's responsibilities does this choice best serve?",
+    options:["Engaging enemies at close range to protect other members","Identifying and eliminating threats from a safe distance before contact occurs","Ace doesn't care about weapons and chose this at random","Rapidly clearing rooms inside buildings"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> As Scout/Sniper, Ace's core value is intelligence gathering and threat elimination before contact. The M110 SASS allows Ace to precisely identify and neutralize threats at long range — the ideal tool for reconnaissance and pre-emptive engagement." },
+
+  { id:'q011', category:'CHARACTERS — WEAPONS & ARMOR',
+    text:"What is the most notable characteristic of Xiao Ru's weapon configuration compared to the other three?",
+    options:["Xiao Ru carries the heaviest weapons to absorb fire on the front line","Xiao Ru's weapons are all lightweight close-range weapons, reflecting a role that avoids direct combat","Xiao Ru carries a sniper rifle for long-range support","Xiao Ru carries no weapons and relies entirely on other members for protection"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> Xiao Ru carries an MP9 submachine gun and a P220 pistol — all lightweight, close-range weapons. This reflects Xiao Ru's positioning as the medic: avoiding lines of fire, weapons used only for self-defense and emergency close-quarters situations." },
+
+  { id:'q012', category:'CHARACTERS — WEAPONS & ARMOR',
+    text:"Which member carries both a carbine and a shotgun as primary weapons?",
+    options:["Garand","Ace","Snow","Xiao Ru"],
+    correct:[2], multi:false,
+    feedback:"<strong>C — Snow.</strong> Snow's primary weapons are a carbine and a shotgun — both close-range, high-impact weapons fully suited to the Breacher role." },
+
+  { id:'q013', category:'CHARACTERS — WEAPONS & ARMOR',
+    text:"Which member's equipment includes a dedicated door-breaching tool?",
+    options:["Garand","Ace","Xiao Ru","Snow"],
+    correct:[3], multi:false,
+    feedback:"<strong>D — Snow.</strong> As Breacher, Snow carries a dedicated door-breaching tool in the tactical backpack. Breaching is one of Snow's most central battlefield responsibilities — going in first, opening the way for the squad." },
+
+  { id:'q014', category:'CHARACTERS — WEAPONS & ARMOR',
+    text:"Which member's standard equipment includes a medical kit?",
+    options:["Snow","Garand","Xiao Ru","Ace"],
+    correct:[2], multi:false,
+    feedback:"<strong>C — Xiao Ru.</strong> Xiao Ru is the squad's medic; the medical kit is a core component of standard equipment. Among the four, only Xiao Ru's loadout is specifically configured for casualty treatment." },
+
+  { id:'q015', category:'CHARACTERS — WEAPONS & ARMOR',
+    text:"Which squad member carries the most comprehensive visual assistance equipment for pre-combat reconnaissance and target identification?",
+    options:["Garand","Snow","Xiao Ru","Ace"],
+    correct:[3], multi:false,
+    feedback:"<strong>D — Ace.</strong> As Scout/Sniper, visual assistance equipment is a core tool for Ace — not just for shooting accuracy, but for gathering battlefield information before contact occurs and providing early warning and intelligence support to the squad." },
+
+  // ── A-3  SQUAD COLLABORATION ──
+  { id:'q016', category:'CHARACTERS — SQUAD COLLABORATION',
+    text:"Snow tends to act on instinct and emotion; Garand tends to lead decisions through analysis and logic. True or false?",
+    options:["True","False"],
+    correct:[0], multi:false,
+    feedback:"<strong>A — True.</strong> Snow is driven by emotion and instinct; Garand leads with logic and analysis. Their decision-making styles differ — but this doesn't prevent them from acting together. The fact that the squad operates as a unit is itself evidence of mutual understanding and respect." },
+
+  { id:'q017', category:'CHARACTERS — SQUAD COLLABORATION',
+    text:"Garand and Ace maintain the primary intelligence-sharing collaboration within the squad. How do they divide responsibilities?",
+    options:["Garand handles all intelligence work; Ace only executes","Garand provides logical analysis and tactical planning; Ace provides perceptual data and threat early warning","Ace handles all intelligence work; Garand only relays commands","Their functions are identical and interchangeable"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> Garand and Ace form a complementary intelligence partnership: Garand processes the logical layer of information; Ace handles the perceptual layer. Their division of labor gives the squad the most complete battlefield intelligence capability." },
+
+  { id:'q018', category:'CHARACTERS — SQUAD COLLABORATION',
+    text:"When Garand joined the squad, the other members were broadly skeptical. What is the primary reason for this skepticism?",
+    options:["Garand's combat capability is noticeably weaker than the other members","Garand is the newest member — integration with squad dynamics is still incomplete","Garand made a serious mistake during a past mission","The other members felt the squad did not need a commander"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> Garand has the shortest service record of all four members — only one year. As the newest member, the trust and rapport with the rest of the squad has not yet been established. This is the fundamental source of the skepticism." },
+
+  { id:'q019', category:'CHARACTERS — SQUAD COLLABORATION',
+    text:"When tension arises between squad members, what role is Xiao Ru most likely to take?",
+    options:["Ignore the conflict and focus on medical responsibilities","Maintain communication and connection between members, easing the tension","Demand both sides stop immediately and prioritize the mission","Hand the conflict to Garand and stay out of it"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> Xiao Ru represents Connection — maintaining bonds between people is the core drive. When members are in conflict, Xiao Ru naturally takes a mediating and bridging role, working through communication and care rather than avoidance or deferral." },
+
+  // ── A-4  APPLIED QUESTIONS ──
+  { id:'q020', category:'CHARACTERS — APPLIED',
+    text:"On an open sports field, Ace can effectively handle threats from long range. True or false?",
+    options:["True","False"],
+    correct:[0], multi:false,
+    feedback:"<strong>A — True.</strong> Ace carries the M110 SASS sniper rifle — the squad's strongest member for long-range precision engagement. An open sports field is exactly the environment where Ace has the greatest advantage: clear sightlines, sufficient range, able to identify and eliminate threats from a safe distance." },
+
+  { id:'q021', category:'CHARACTERS — APPLIED',
+    text:"Snow, carrying breaching tools and close-quarters weapons, is the preferred member for door breaching and room clearing. True or false?",
+    options:["True","False"],
+    correct:[0], multi:false,
+    feedback:"<strong>A — True.</strong> Snow is the designated Breacher, carrying a dedicated door-breaching tool in the tactical backpack. The primary weapons — a carbine and shotgun — are both close-range, high-impact weapons. Snow's entire loadout is designed for breaching and room clearance." },
+
+  { id:'q022', category:'CHARACTERS — APPLIED',
+    text:"Xiao Ru is the squad member with the best healing capability. True or false?",
+    options:["True","False"],
+    correct:[0], multi:false,
+    feedback:"<strong>A — True.</strong> Xiao Ru is the squad's only medic; treating casualties is the core responsibility, with equipment and skills designed around this function. The other three members have no specialist medical capability. Xiao Ru is irreplaceable in this role." },
+
+  // ── B-1  THE HOLLOWED ──
+  { id:'q023', category:'ENEMIES — THE HOLLOWED',
+    text:"The Hollowed are too weak to pose a real threat — they should always be eliminated on sight. True or false?",
+    options:["True","False"],
+    correct:[1], multi:false,
+    feedback:"<strong>B — False.</strong> The act of killing consumes ammunition, and ammunition use costs Spirit. The Hollowed are numerous; most will not attack unprovoked, and eliminating them generates noise that activates more. Bypassing them is usually more efficient than clearing them." },
+
+  { id:'q024', category:'ENEMIES — THE HOLLOWED',
+    text:"Once activated, how do the Hollowed primarily threaten the squad?",
+    options:["Ranged projectile attacks","Encirclement and attrition through numbers","A single attack capable of lethal damage","Direct, accurate melee attacks"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> An individual Hollowed poses minimal threat. The danger comes from large numbers encircling the squad and applying sustained pressure. Their threat is not individual combat power — it is the siege effect of accumulated numbers." },
+
+  // ── B-2  THE VANGUARD ──
+  { id:'q025', category:'ENEMIES — THE VANGUARD',
+    text:"What is the Vanguard's most dangerous characteristic in combat?",
+    options:["High-accuracy ranged attacks that are difficult to avoid","Immediately charges at full speed upon detecting the squad — no pause, no retreat","Summons large numbers of Hollowed to encircle the squad","Disguises itself as something safe to lure the squad closer"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> Once the Vanguard detects the squad, it charges at full speed — no pause, no retreat, no recalculation. This unconditional advance makes it extremely difficult to counter through delay or maneuver." },
+
+  { id:'q026', category:'ENEMIES — THE VANGUARD',
+    text:"The Vanguard is predictable — it charges and almost never retreats. True or false?",
+    options:["True","False"],
+    correct:[0], multi:false,
+    feedback:"<strong>A — True.</strong> Once it has locked onto a target, the Vanguard charges with full commitment — a single, predictable pattern with almost no change of strategy or retreat. This allows the squad to anticipate its movement path and prepare accordingly." },
+
+  // ── B-3  THE APPARATUS ──
+  { id:'q027', category:'ENEMIES — THE APPARATUS',
+    text:"What is the Apparatus's most dangerous characteristic in combat?",
+    options:["Extremely high direct attack damage — the strongest output in the Delegated tier","Does not attack directly, but continuously activates the Hollowed — and summons a higher-tier enemy when its own Spirit is depleted","Moves extremely fast and cannot be caught","Immune to all status effects and cannot be weakened"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> The Apparatus always stays behind the Hollowed, never engaging directly — but continuously commands and activates surrounding Hollowed, and summons the Instructor when its own Spirit runs out. It operates through proxy damage and threat escalation." },
+
+  { id:'q028', category:'ENEMIES — THE APPARATUS',
+    text:"The Apparatus always hides behind the Hollowed. Which member is best suited to strike it directly without first clearing the human shield?",
+    options:["Snow — charge into the crowd for a close-quarters breakthrough","Xiao Ru — flank to the side for support fire","Garand — direct other members to draw the shield's attention","Ace — long-range precision fire, hitting the Apparatus over the crowd"],
+    correct:[3], multi:false,
+    feedback:"<strong>D — Ace.</strong> Ace's sniper rifle provides the capability to bypass the shield and engage the Apparatus directly. Ace's long-range capability is the primary tool for reaching it without first clearing the crowd." },
+
+  // ── B-4  SUBJECT PREFECT ──
+  { id:'q029', category:'ENEMIES — CHEMISTRY PREFECT',
+    text:"What is the Chemistry Prefect's primary threat?",
+    options:["Extremely high single-hit physical damage — capable of incapacitating a member in one strike","Corrosive projectiles that cause sustained Spirit drain over a wide area","Summoning large numbers of Hollowed to encircle the squad","Extremely fast movement that is difficult to avoid"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> The Chemistry Prefect carries corrosive materials; its attacks apply a sustained Spirit drain effect. The Corrosion status continues to consume the target's Spirit for several rounds after impact — sustained pressure on squad resources." },
+
+  { id:'q030', category:'ENEMIES — CHEMISTRY PREFECT',
+    text:"The Chemistry Prefect gives no warning before throwing — the squad cannot anticipate the attack timing. True or false?",
+    options:["True","False"],
+    correct:[1], multi:false,
+    feedback:"<strong>B — False.</strong> The Chemistry Prefect has a clearly visible preparation phase — it enters a wind-up state in the first round (container in hand, with a visible visual cue) and only executes the throw in the second round. This preparatory state is observable and gives the squad time to respond." },
+
+  { id:'q031', category:'ENEMIES — PHYSICS PREFECT',
+    text:"What is the Physics Prefect's most dangerous characteristic?",
+    options:["Its attacks trigger a large explosion that affects all units on the field","High-precision attacks that partially bypass cover protection","Summons large numbers of Hollowed as a human shield, making approach difficult","Its attacks apply a sustained Spirit drain that is difficult to recover from"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> The Physics Prefect calculates trajectories with geometric precision — extremely high accuracy that can partially penetrate cover. This means hiding behind cover does not fully prevent its damage; the squad must manage positioning more actively." },
+
+  { id:'q032', category:'ENEMIES — PHYSICS PREFECT',
+    text:"The Physics Prefect's attacks are highly accurate, but taking cover completely negates the damage. True or false?",
+    options:["True","False"],
+    correct:[1], multi:false,
+    feedback:"<strong>B — False.</strong> The Physics Prefect's attacks partially bypass cover — even behind cover, damage cannot be fully avoided. This is the Prefect's most distinctive threat, requiring the squad to use higher-tier cover or stay entirely outside its attack range." },
+
+  { id:'q033', category:'ENEMIES — MATH PREFECT',
+    text:"What is the Math Prefect's most distinctive characteristic compared to the other Prefect variants?",
+    options:["Highest attack frequency — sustained pressure that gives the squad no room to breathe","Highest single-hit damage, but extremely low attack frequency","Can attack multiple targets simultaneously, dealing area damage","Attacks apply Corrosion, continuously draining Spirit"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> The Math Prefect is the variant with the highest single-hit damage and the lowest attack frequency. Its threat comes from the destructive power of each hit — not from sustained pressure. The squad must pay close attention to its attack rhythm and prepare to evade during its wind-up." },
+
+  { id:'q034', category:'ENEMIES — MATH PREFECT',
+    text:"The Math Prefect attacks frequently and is the Prefect variant with the strongest sustained pressure capability. True or false?",
+    options:["True","False"],
+    correct:[1], multi:false,
+    feedback:"<strong>B — False.</strong> The Math Prefect is the lowest attack frequency variant among the Prefects — its characteristic is precisely the opposite: highest single-hit damage, but very slow to act. The strongest sustained pressure comes from other variants, not the Math Prefect." },
+
+  // ── B-5  THE INSTRUCTOR ──
+  { id:'q035', category:'ENEMIES — THE INSTRUCTOR',
+    text:"What is the Instructor's most dangerous passive effect on the battlefield?",
+    options:["Actively pursues the squad at high speed — impossible to outrun","All Hollowed within range automatically enter an activated state with no trigger condition required","Completely immune to all status effects","Its attacks permanently reduce a member's maximum Spirit"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> The Instructor's Area Control passive: all Hollowed within range are permanently in an activated state while the Instructor is alive, with no trigger condition required; it also increases the action frequency of Delegated enemies in range. The Instructor's mere presence restructures the entire battlefield." },
+
+  { id:'q036', category:'ENEMIES — THE INSTRUCTOR',
+    text:"Faced with the Instructor, which strategy is most reasonable?",
+    options:["Engage immediately — concentrate fire to eliminate it quickly","Have Snow lead the charge into its range, leveraging high firepower to suppress it","Assess whether passing through its control zone is necessary — bypass if possible, to avoid triggering its area effects","Use Xiao Ru to draw its attention while other members flank from the side"],
+    correct:[2], multi:false,
+    feedback:"<strong>C.</strong> As long as the squad does not enter its range, its passive effects and attacks will not trigger. Bypassing if possible is the most resource-efficient response." },
+
+  // ── B-6  THE GATEKEEPER ──
+  { id:'q037', category:'ENEMIES — THE GATEKEEPER',
+    text:"The Gatekeeper actively pursues the squad — direct confrontation is required to pass. True or false?",
+    options:["True","False"],
+    correct:[1], multi:false,
+    feedback:"<strong>B — False.</strong> The Gatekeeper only holds its position — it does not pursue. The squad must pass through the point it guards, but it will not leave its post to hunt the squad. This means the squad retains the initiative in choosing when and how to engage." },
+
+  { id:'q038', category:'ENEMIES — THE GATEKEEPER',
+    text:"The Gatekeeper's frontal defense is extremely high — attacking from the front is the least efficient approach. True or false?",
+    options:["True","False"],
+    correct:[0], multi:false,
+    feedback:"<strong>A — True.</strong> The Gatekeeper's shield makes frontal defense extremely high — most damage from the front is absorbed by the shield. Attacking from the side or rear deals full damage." },
+
+  // ── B-7  THE CONFESSOR ──
+  { id:'q039', category:'ENEMIES — THE CONFESSOR',
+    text:"The Confessor is one of the most dangerous enemies in Level 1. What is its primary method of attack?",
+    options:["Disguises itself as something safe at long range — immediately summons the Arbiter when the squad approaches or attacks","Summons large numbers of Hollowed to encircle the squad","Permanently reduces the Spirit ceiling of whichever member it targets","Copies the squad's attack patterns and counters them"],
+    correct:[0], multi:false,
+    feedback:"<strong>A.</strong> At long range, the Confessor is not flagged by the threat indicator system — it appears neutral, even sending approach signals to injured members. When a member enters close range or initiates an attack, it immediately summons the Arbiter." },
+
+  { id:'q040', category:'ENEMIES — THE CONFESSOR',
+    text:"Killing the Confessor is difficult — but it yields worthwhile rewards. True or false?",
+    options:["True","False"],
+    correct:[1], multi:false,
+    feedback:"<strong>B — False.</strong> Approaching or attacking the Confessor immediately triggers the summoning of the Arbiter. The cost far exceeds any possible reward. The correct — and only — response is complete avoidance." },
+
+  // ── B-8  THE ARBITER OF DEVIATION ──
+  { id:'q041', category:'ENEMIES — THE ARBITER',
+    text:"Outside the final confrontation, directly attacking the Arbiter of Deviation is an effective response. True or false?",
+    options:["True","False"],
+    correct:[1], multi:false,
+    feedback:"<strong>B — False.</strong> Directly attacking the Arbiter has no effect — it absorbs damage and becomes stronger, while summoning more subordinates. Outside the final confrontation, the correct response is to disengage, hide, and wait for the noise level to decay naturally." },
+
+  { id:'q042', category:'ENEMIES — THE ARBITER',
+    text:"In the final confrontation, directly attacking the Arbiter of Deviation is the most effective way to defeat it. True or false?",
+    options:["True","False"],
+    correct:[1], multi:false,
+    feedback:"<strong>B — False.</strong> Even in the final confrontation, directly attacking the Arbiter causes it to absorb damage and summon more subordinates. The correct approach is to eliminate all subordinate enemies that sustain it, severing the supply chain. Once the supply chain is cut, the Arbiter's attack power drops to zero and the squad can pass." },
+
+  // ── D-1  MA MING ──
+  { id:'q043', category:'ALLIES — MA MING',
+    text:"Ma Ming chose to stay at the school after the evacuation order — primarily because he has worked here for over twenty years and knows it better than anywhere else, and because he wants to use that knowledge to help others. True or false?",
+    options:["True","False"],
+    correct:[0], multi:false,
+    feedback:"<strong>A — True.</strong> Ma Ming has worked at this school for over twenty-two years — he knows every corner and passage. Familiarity with the place is one reason he stayed; equally important is that he knew his knowledge could be of use." },
+
+  { id:'q044', category:'ALLIES — MA MING',
+    text:"Ma Ming's familiarity with the campus makes him the best guide for the squad's navigation. True or false?",
+    options:["True","False"],
+    correct:[0], multi:false,
+    feedback:"<strong>A — True.</strong> Ma Ming has worked at this school for over twenty-two years — he knows every corner and passage. Wherever the squad needs to go, he is the best person to ask." },
+
+  // ── D-2  BAI RUOXI ──
+  { id:'q045', category:'ALLIES — BAI RUOXI',
+    text:"Bai Ruoxi has only been back in the country for one or two years, but she is already exhausted. Which description most accurately captures her state?",
+    options:["She is angry about the school's situation and considering resigning","She knows her capacity is limited and cannot fix structural problems — but she keeps going with whatever she has, hoping to help one more student","She has become numb to the students' situations and only performs her duties mechanically","She sees exhaustion as a sign of weakness and deliberately suppresses her emotions to stay professional"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> Bai Ruoxi knows the limits of her position — students' pain often originates in the system, not in the students themselves, and individual counseling cannot fix that. But she keeps going with whatever capacity she has, hoping to help one more student. Exhaustion and continuing to work coexist in her without contradiction." },
+
+  { id:'q046', category:'ALLIES — BAI RUOXI',
+    text:"Bai Ruoxi holds important information about the survivor students, but the squad must first build trust and demonstrate their intentions before she will gradually release it. True or false?",
+    options:["True","False"],
+    correct:[0], multi:false,
+    feedback:"<strong>A — True.</strong> Bai Ruoxi is not unwilling to help — she is seriously upholding confidentiality. The squad must accumulate trust and demonstrate intent before she unlocks information incrementally: general observations first, then specific student location leads, and finally full background only in a genuine crisis. She does not abandon judgment just because the situation is urgent." },
+
+  // ── D-3  CHEN ZHIMING ──
+  { id:'q047', category:'ALLIES — CHEN ZHIMING',
+    text:"Chen Zhiming witnessed the events in Beijing in 1989. How did this experience ultimately shape his choices?",
+    options:["He left China and continued political activism abroad","He understood the cost of direct confrontation with the machinery of power, and became a history teacher — working within the system, trying to change the soil that produces violence","He became entirely disillusioned with politics and chose to distance himself from all social issues","He joined an underground resistance organization and continued to fight the system through direct action"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> Witnessing those events gave Chen Zhiming a deep understanding of the cost of direct confrontation with the machinery of power. He chose to become a history teacher — working within the system, trying to change the soil that produces violence." },
+
+  { id:'q048', category:'ALLIES — CHEN ZHIMING',
+    text:"What critical information can Chen Zhiming provide to the squad?",
+    options:["Psychological records and personal backgrounds of survivor students","The school's electrical systems and door controls","A framework for understanding the nature of the Arbiter","Real-time status of evacuation points and safe routes"],
+    correct:[2], multi:false,
+    feedback:"<strong>C.</strong> Chen Zhiming has seen how power structures operate, how they punish deviation, how they perpetuate themselves — he can provide a framework that makes the Arbiter comprehensible. Understanding it is the prerequisite for confronting it." },
+
+  // ── E  WORLD & MECHANICS ──
+  { id:'q049', category:'WORLD & MECHANICS',
+    text:"In Level 1, Snow is the strongest combatant in the squad — but using Snow at full capacity can make the level impossible to complete. Why?",
+    options:["Snow's weapons in Level 1 don't have enough firepower","Snow's attacks deal friendly fire damage to squad members","Every act of violence Snow commits raises the noise level — if it gets too high, the Arbiter is summoned","Snow is in an injured state in Level 1 and cannot perform at full capacity"],
+    correct:[2], multi:false,
+    feedback:"<strong>C.</strong> Snow is in a state of uncontrolled amplification in Level 1 — the power is real, and so is the danger. Every act of violence raises the noise level. When the noise level exceeds its limit, the Arbiter is summoned. The harder Snow fights, the closer the level gets to unwinnable." },
+
+  { id:'q050', category:'WORLD & MECHANICS',
+    text:"Why can the Arbiter of Deviation not be defeated through direct attack?",
+    options:["The Arbiter is not the highest authority — only eliminating the supreme leader will cause the system to collapse","An authoritarian system cannot be overthrown by one person through brute force — it absorbs opposition and grows stronger through it. Real change requires collective effort to sever the structural foundation that sustains it. Without removing the conditions that produce authoritarianism, a successful challenger only becomes the next tyrant","The squad is not yet strong enough — only by continuing to grow stronger will they one day be able to defeat the Arbiter","Authoritarian systems always collapse on their own — given enough time, it will die by itself"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> The Arbiter does not represent an individual that can be struck down — it represents a system. Directly attacking it only causes it to absorb damage and grow stronger — opposition becomes its fuel. The way to defeat it in the final confrontation is to eliminate all the subordinates that sustain it, severing the supply chain. The system's collapse does not come from a frontal assault, but from collective effort to dismantle the conditions on which it depends — otherwise, a successful challenger only becomes the next tyrant." },
+
+  { id:'q051', category:'WORLD & MECHANICS',
+    text:"Spirit is one of the squad's core resources. What fundamentally distinguishes it from ordinary health points?",
+    options:["Spirit is harder to recover than health and is permanently lost once depleted","Spirit simultaneously affects health, ammunition, and skills — it is the underlying resource driving all of the squad's combat capability","Spirit and health points are identical — the name is just different","Spirit only affects skill use and has no bearing on combat survival"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> Spirit is not a single separate resource bar. It simultaneously affects the squad's maximum health, ammunition reserves, and skill availability — as Spirit drops, the squad's overall combat capability drops with it. Managing Spirit is one of the core operations of the game." },
+
+  { id:'q052', category:'WORLD & MECHANICS',
+    text:"In combat, different tiers of cover provide different degrees of protection. Which description is correct?",
+    options:["All cover provides identical protection — the only difference is durability","Higher-tier cover provides stronger protection — but certain enemy attacks can partially penetrate lower-tier cover","Taking any cover completely negates all incoming damage","Cover disappears permanently after absorbing a single attack"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> The game uses a four-tier cover system — higher tier means stronger protection. Certain enemies (such as the Physics Prefect) can partially penetrate lower-tier cover, meaning hiding behind weaker cover does not fully prevent damage. Choosing and managing cover is one of the core judgments in combat." },
+
+  { id:'q053', category:'WORLD & MECHANICS',
+    text:"In Level 1, which actions raise the noise level?",
+    options:["Only Snow's skills raise the noise level — other members' actions are unaffected","Any act of combat raises the noise level — including shooting, melee, and explosives","Only explosives raise the noise level — ordinary shooting does not","The noise level is unrelated to combat — only member movement raises it"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> Noise level is the core pressure mechanic of Level 1. Any act of combat — shooting, melee, explosives — generates noise and raises the noise level. When the noise level accumulates to its limit, the Arbiter is summoned. Every combat decision carries a cost; bypassing threats is often more rational than eliminating them." },
+
+  { id:'q054', category:'WORLD & MECHANICS',
+    text:"During each raid, the evacuation point's location is not fixed — the squad must actively explore to find it. True or false?",
+    options:["True","False"],
+    correct:[0], multi:false,
+    feedback:"<strong>A — True.</strong> The evacuation point's location appears randomly each raid and is never in the same place. Each raid guarantees at least one evacuation point, but finding it requires active exploration. Relying on a fixed route is not viable — every entry is new terrain." },
+
+  { id:'q055', category:'WORLD & MECHANICS',
+    text:"Beyond serving as a means of transport, what other function does the squad's vehicle serve in the game?",
+    options:["The vehicle is only used for travel between levels — no other function","The vehicle is the squad's mobile base — between levels, it's where they rest, upgrade equipment, and advance the story","The vehicle is the exclusive space of squad commander Garand — other members cannot use it","The vehicle stores all collected resources but cannot be upgraded in any way"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> The vehicle is the only space in the wasteland that belongs to the squad. Between levels, they rest here, upgrade vehicle modules, and advance the story. Vehicle upgrades divide into universal modules (benefiting the full squad) and member-specific modules (enhancing a corresponding member's capabilities) — how resources are allocated reflects the player's tactical priorities." },
+
+  { id:'q056', category:'WORLD & MECHANICS',
+    text:"What is the squad's basic action loop during each raid?",
+    options:["Enter → eliminate all enemies → wait for rescue","Enter → explore the area, collect resources, complete designated tasks → find the evacuation point and extract","Enter → hold a fixed position until the mission timer ends","Enter → find the boss → defeat the boss → extract"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> The core loop of each raid is explore, scavenge, extract. The squad enters a randomly generated section of the level, collects resources and advances tasks in a hostile environment, then finds and uses the evacuation point to leave. Eliminating all enemies is neither the objective nor a requirement — bypassing threats is often more rational than clearing them." },
+
+  { id:'q057', category:'WORLD & MECHANICS',
+    text:"What is the squad's ultimate goal in the game?",
+    options:["Eliminate all enemies and restore the wasteland to normal","Cross the wasteland and find a way out for the squad","Recruit enough survivors to build an army and seize the wasteland","Have the four squad members separate and each return to their own lives"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> What the squad must do is cross this collapsed internal world and find a way out — together." },
+
+  { id:'q058', category:'WORLD & MECHANICS',
+    text:"The Bleeding status does not stop on its own and must be actively treated — with multiple stacks, the consequences can rapidly become lethal. True or false?",
+    options:["True","False"],
+    correct:[0], multi:false,
+    feedback:"<strong>A — True.</strong> Bleeding does not resolve naturally and must be treated actively. Minor Bleeding, Major Bleeding, and Internal Bleeding each drain a different percentage of Spirit per round, and all can stack to multiple layers — when multiple bleeds are active simultaneously, Spirit loss accumulates to dangerous levels rapidly. Xiao Ru's stop-bleeding skill or specific items are the primary means of removing Bleeding." },
+
+  { id:'q059', category:'WORLD & MECHANICS',
+    text:"When a squad member applies Suppression to an enemy, what happens?",
+    options:["The suppressed enemy immediately loses all action points and skips their turn","Whenever the suppressed unit attempts an action, the suppressor immediately makes a reaction attack — a successful hit interrupts and cancels the action","The suppressed enemy's movement speed is greatly reduced, but it can still attack normally","The Suppression effect lasts until the end of combat and cannot be removed"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> Suppression is a linked bidirectional state — the source gains Suppressing, the target gains Suppressed. Each time the suppressed unit attempts an action, the suppressor immediately fires a reaction attack; a successful hit interrupts and cancels that action. But the state is not permanent — once the suppressor takes any damage, or once the suppressor's next action resolves, both states are cleared simultaneously." },
+
+  { id:'q060', category:'WORLD & MECHANICS',
+    text:"Which description correctly explains the effect of battlefield terrain on the squad?",
+    options:["Terrain is purely visual and has no effect on combat","Different terrain affects movement speed, Spirit expenditure, or noise generation — pooled water slows movement; corrosive terrain drains Spirit","Terrain only affects enemies — squad members are completely immune to terrain effects","All terrain effects disappear automatically at the start of combat"],
+    correct:[1], multi:false,
+    feedback:"<strong>B.</strong> Battlefield terrain is an active combat variable. Pooled water and scattered books slow movement; corrosive terrain (left by Chemistry Prefect attacks) drains Spirit continuously; broken glass generates noise — stepping on it raises the noise level. Positioning and cover matter equally — the ground itself is a battlefield variable that must be managed." }
+
+];
+
+// ── STATE ──
+let questionSet = [], currentIndex = 0, score = 0;
+
+function getAnswered() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+function saveAnswered(ids) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(ids)); } catch(e) {}
+}
+function getRemaining() {
+  const answered = getAnswered();
+  return QUESTIONS.filter(q => !answered.includes(q.id));
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function updateTitleInfo() {
+  const remaining = getRemaining().length;
+  const total = QUESTIONS.length;
+  const answered = total - remaining;
+  const prog = document.getElementById('title-progress');
+  const btn  = document.getElementById('start-btn');
+
+  if (remaining === 0) {
+    prog.innerHTML = `ALL <em>${total}</em> QUESTIONS COMPLETED`;
+    btn.textContent = 'VIEW COMPLETION';
+    btn.onclick = () => showScreen('cleared-screen');
+    btn.disabled = false;
+    return;
+  }
+  prog.innerHTML = answered > 0
+    ? `PROGRESS: <em>${answered}</em> / ${total} QUESTIONS ANSWERED`
+    : `${total} QUESTIONS IN DATABASE`;
+  btn.textContent = remaining < QUESTIONS_PER_ROUND
+    ? `FINAL ROUND — ${remaining} LEFT`
+    : 'BEGIN ASSESSMENT';
+  btn.onclick = startQuiz;
+  btn.disabled = false;
+}
+
+function startQuiz() {
+  const remaining = getRemaining();
+  if (remaining.length === 0) { showScreen('cleared-screen'); return; }
+  questionSet = shuffle(remaining).slice(0, QUESTIONS_PER_ROUND);
+  currentIndex = 0;
+  score = 0;
+  showScreen('quiz-screen');
+  renderQuestion();
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function renderQuestion() {
+  const q = questionSet[currentIndex];
+  const total = questionSet.length;
+  document.getElementById('q-num').textContent = currentIndex + 1;
+  document.getElementById('score-now').textContent = score;
+  document.getElementById('progress-fill').style.width = (currentIndex/total*100)+'%';
+  document.getElementById('q-category').textContent = q.category;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('q-multi-hint').textContent = q.multi ? '// SELECT ALL THAT APPLY' : '';
+
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+  ['A','B','C','D','E'].slice(0, q.options.length).forEach((letter, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-letter">${letter}</span><span>${q.options[i]}</span>`;
+    btn.onclick = () => handleAnswer(i);
+    grid.appendChild(btn);
+  });
+
+  document.getElementById('feedback-box').className = 'feedback-box';
+  document.getElementById('feedback-box').innerHTML = '';
+  document.getElementById('next-btn').className = 'next-btn';
+  document.getElementById('next-btn').textContent =
+    currentIndex === questionSet.length-1 ? 'VIEW RESULTS →' : 'NEXT →';
+
+  const card = document.getElementById('q-card');
+  card.style.animation = 'none';
+  void card.offsetWidth;
+  card.style.animation = 'slideIn .35s ease forwards';
+}
+
+function handleAnswer(chosen) {
+  const q = questionSet[currentIndex];
+  const buttons = document.querySelectorAll('.option-btn');
+  buttons.forEach(b => b.disabled = true);
+  const isCorrect = q.correct.includes(chosen);
+  buttons[chosen].classList.add(isCorrect ? 'correct' : 'wrong');
+  q.correct.forEach(ci => { if (ci !== chosen) buttons[ci].classList.add('missed'); });
+  if (isCorrect) score++;
+  const fb = document.getElementById('feedback-box');
+  fb.innerHTML = q.feedback;
+  fb.className = 'feedback-box show' + (isCorrect ? ' correct-fb' : '');
+  document.getElementById('next-btn').classList.add('show');
+  document.getElementById('score-now').textContent = score;
+}
+
+function nextQuestion() {
+  // persist this question as answered
+  const q = questionSet[currentIndex];
+  const answered = getAnswered();
+  if (!answered.includes(q.id)) { answered.push(q.id); saveAnswered(answered); }
+  currentIndex++;
+  if (currentIndex >= questionSet.length) showResults();
+  else renderQuestion();
+}
+
+function showResults() {
+  showScreen('result-screen');
+  const total = questionSet.length;
+  const pct = score / total;
+  const remaining = getRemaining().length;
+
+  let grade, text;
+  if (pct === 1)      { grade='S'; text=`Every question answered correctly.`; }
+  else if (pct>=.8)   { grade='A'; text=`Strong results.`; }
+  else if (pct>=.6)   { grade='B'; text=`Most questions answered correctly.`; }
+  else if (pct>=.4)   { grade='C'; text=`Some questions missed.`; }
+  else                { grade='D'; text=`Most answers are not correct.`; }
+
+  document.getElementById('result-grade').textContent = grade;
+  document.getElementById('result-score').textContent = score;
+  document.getElementById('result-total').textContent = total;
+  document.getElementById('result-text').innerHTML = text;
+
+  const remEl = document.getElementById('result-remaining');
+  const contBtn = document.getElementById('continue-btn');
+  if (remaining === 0) {
+    remEl.innerHTML = `// ALL QUESTIONS ANSWERED — DATABASE CLEARED`;
+    contBtn.textContent = 'VIEW COMPLETION →';
+    contBtn.onclick = () => showScreen('cleared-screen');
+  } else {
+    remEl.innerHTML = `// <em>${remaining}</em> QUESTIONS REMAINING IN DATABASE`;
+    contBtn.textContent = 'NEXT ROUND →';
+    contBtn.onclick = startQuiz;
+  }
+}
+
+function resetProgress() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+  showScreen('title-screen');
+  updateTitleInfo();
+}
+
+function openModal(action) {
+  document.getElementById('modal-overlay').classList.add('active');
+  document.getElementById('modal-confirm').onclick = () => {
+    closeModal();
+    if (action === 'reset') resetProgress();
+    if (action === 'skip') showScreen('cleared-screen');
+  };
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('active');
+}
+
+// init
+updateTitleInfo();
+</script>
+</body>
+</html>
