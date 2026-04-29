@@ -728,6 +728,7 @@ function hideSplash() {
 }
 function splashDismiss() {
   hideSplash();
+  resetIdleTimer();
 }
 
 // ═══════════════════════════════════════
@@ -1304,6 +1305,7 @@ function resetProgress() {
   showScreen('title-screen');
   updateTitleInfo();
   showSplash();
+  resetIdleTimer();
 }
 
 function openModal(action) {
