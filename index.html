@@ -54,14 +54,8 @@
     z-index: 0;
   }
 
-  /* ── DESKTOP BACKGROUND (character art — quiz screens only) ── */
-  #desktop-bg {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    background: var(--black);
-  }
+  /* ── DESKTOP BACKGROUND (not used — bg is on viewport div) ── */
+  #desktop-bg { display: none !important; }
 
   /* ── CORNER DECORATIONS ── */
   .corner-tl, .corner-br {
@@ -388,42 +382,44 @@
     justify-content: center;
   }
 
-  /* Quiz card & title content sit above bg */
-  body.desktop-mode #title-screen > *,
+  /* All desktop screens: character art full-bleed bg, no overlay */
   body.desktop-mode #quiz-screen > *,
   body.desktop-mode #result-screen > *,
-  body.desktop-mode #cleared-screen > * {
+  body.desktop-mode #cleared-screen > *,
+  body.desktop-mode #title-screen > * {
     position: relative;
     z-index: 2;
   }
 
-  /* All desktop screens: character art bg at 100%, single 75% dark overlay */
+  /* Desktop viewport bg: character art 100% */
+  body.desktop-mode #desktop-viewport {
+    background: url('AceG_Ling_PJ3.png') center center / cover no-repeat;
+  }
+
+  /* Title screen panel: 100% opaque */
+  body.desktop-mode #title-screen {
+    background: var(--black2);
+    position: relative;
+  }
+
+  /* Quiz / Result / Cleared panels: 75% opaque, bg shows through */
   body.desktop-mode #quiz-screen,
   body.desktop-mode #result-screen,
-  body.desktop-mode #cleared-screen,
-  body.desktop-mode #title-screen {
+  body.desktop-mode #cleared-screen {
+    background: rgba(17,17,17,0.75);
     position: relative;
-    background: transparent;
   }
+
+  /* Remove any pseudo-element overlays */
   body.desktop-mode #quiz-screen::before,
-  body.desktop-mode #result-screen::before,
-  body.desktop-mode #cleared-screen::before,
-  body.desktop-mode #title-screen::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: url('AceG_Ling_PJ3.png') center center / cover no-repeat;
-    z-index: 0;
-  }
   body.desktop-mode #quiz-screen::after,
+  body.desktop-mode #result-screen::before,
   body.desktop-mode #result-screen::after,
+  body.desktop-mode #cleared-screen::before,
   body.desktop-mode #cleared-screen::after,
+  body.desktop-mode #title-screen::before,
   body.desktop-mode #title-screen::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(10,10,10,0.75);
-    z-index: 1;
+    display: none;
   }
 
   /* Desktop title sizing */
@@ -523,6 +519,7 @@
       <button class="next-btn" id="next-btn" onclick="nextQuestion()">NEXT →</button>
     </div>
     <div class="q-reset-hint">If you choose to stop interaction, please remember to reset.</div>
+    <button class="reset-btn" style="margin-top:10px;width:100%;max-width:480px;" onclick="openModal('reset')">↺ RESET ALL PROGRESS</button>
   </div>
 
   <!-- MODAL -->
