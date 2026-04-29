@@ -17,6 +17,8 @@
     --black: #0A0A0A;
     --black2: #111;
     --black3: #1A1A1A;
+    --panel-bg: rgba(10,10,10,0.75);
+    --panel-border: rgba(51,51,51,0.8);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -29,13 +31,14 @@
     overflow-x: hidden;
   }
 
+  /* ── NOISE OVERLAY ── */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
     pointer-events: none;
-    z-index: 100;
+    z-index: 900;
     opacity: 0.4;
   }
 
@@ -51,9 +54,159 @@
     z-index: 0;
   }
 
+  /* ── DESKTOP BACKGROUND (persistent cover art) ── */
+  #desktop-bg {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: var(--black) url('CoverArt_AceG_Ling.png') center center / cover no-repeat;
+  }
+
+  /* ── CORNER DECORATIONS ── */
+  .corner-tl, .corner-br {
+    position: fixed; width: 80px; height: 80px; z-index: 50; pointer-events: none;
+  }
+  .corner-tl { top:0; left:0; border-top:2px solid var(--red); border-left:2px solid var(--red); }
+  .corner-br { bottom:0; right:0; border-bottom:2px solid var(--red); border-right:2px solid var(--red); }
+
+  .scanline {
+    position: fixed; top:0; left:0; right:0; height:2px;
+    background: linear-gradient(90deg, transparent, var(--red), transparent);
+    opacity: 0.6; animation: scan 4s linear infinite; z-index: 51; pointer-events: none;
+  }
+  @keyframes scan { 0%{top:0} 100%{top:100vh} }
+
+  /* ── DEVICE TOGGLE (top-right) ── */
+  #device-toggle {
+    position: fixed;
+    top: 12px; right: 12px;
+    z-index: 800;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  #device-toggle button {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    padding: 5px 10px;
+    background: transparent;
+    border: 1px solid var(--gray-dark);
+    color: var(--gray-dark);
+    cursor: pointer;
+    transition: all .15s;
+    clip-path: polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);
+  }
+  #device-toggle button.active {
+    border-color: var(--red);
+    color: var(--red);
+  }
+  #device-toggle button:hover:not(.active) {
+    border-color: var(--gray);
+    color: var(--gray);
+  }
+
+  /* ── GALLERY BUTTON (bottom-right floating) ── */
+  #gallery-btn {
+    position: fixed;
+    bottom: 24px; right: 16px;
+    z-index: 800;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    padding: 10px 18px;
+    background: rgba(10,10,10,0.85);
+    border: 1px solid var(--red);
+    color: var(--red);
+    cursor: pointer;
+    clip-path: polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);
+    transition: background .15s, color .15s;
+  }
+  #gallery-btn:hover { background: var(--red); color: var(--white); }
+
+  /* ── GALLERY OVERLAY ── */
+  #gallery-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 850;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    overflow-y: auto;
+    padding: 40px 20px 60px;
+  }
+  #gallery-overlay.active { display: flex; }
+
+  .gallery-header {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--gray-dark);
+    padding-bottom: 16px;
+  }
+  .gallery-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 6px;
+    color: var(--white);
+  }
+  .gallery-title span { color: var(--red); }
+  .gallery-close {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 4px;
+    padding: 8px 20px;
+    background: transparent;
+    border: 1px solid var(--gray-dark);
+    color: var(--gray);
+    cursor: pointer;
+    clip-path: polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);
+    transition: all .15s;
+  }
+  .gallery-close:hover { border-color: var(--red); color: var(--red); }
+
+  .gallery-grid {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+  .gallery-item {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: 1px solid var(--gray-dark);
+    border-left: 3px solid var(--red);
+    padding: 16px;
+    background: rgba(17,17,17,0.8);
+  }
+  .gallery-item img {
+    width: 100%;
+    max-width: 860px;
+    height: auto;
+    display: block;
+    object-fit: contain;
+  }
+  .gallery-caption {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--gray);
+    text-transform: uppercase;
+  }
+  .gallery-caption em { color: var(--white); font-style: normal; }
+
+  /* ── SCREENS ── */
   .screen {
     position: relative;
-    z-index: 1;
+    z-index: 10;
     min-height: 100vh;
     display: none;
     flex-direction: column;
@@ -63,20 +216,46 @@
   }
   .screen.active { display: flex; }
 
-  .corner-tl, .corner-br {
-    position: fixed; width: 80px; height: 80px; z-index: 2; pointer-events: none;
+  /* ═══════════════════════════════════════
+     DESKTOP SPLASH SCREEN
+  ═══════════════════════════════════════ */
+  #splash-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 600;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    cursor: pointer;
+    background: transparent;
   }
-  .corner-tl { top:0; left:0; border-top:2px solid var(--red); border-left:2px solid var(--red); }
-  .corner-br { bottom:0; right:0; border-bottom:2px solid var(--red); border-right:2px solid var(--red); }
+  #splash-screen.active { display: flex; }
 
-  .scanline {
-    position: fixed; top:0; left:0; right:0; height:2px;
-    background: linear-gradient(90deg, transparent, var(--red), transparent);
-    opacity: 0.6; animation: scan 4s linear infinite; z-index:3; pointer-events:none;
+  .splash-prompt {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(16px, 2vw, 22px);
+    letter-spacing: 10px;
+    color: var(--white);
+    text-shadow: 0 0 30px rgba(232,0,28,0.8);
+    opacity: 0;
+    animation: splashPulse 2s ease-in-out infinite;
+    margin-top: 60vh;
+    background: rgba(0,0,0,0.5);
+    padding: 12px 32px;
+    border: 1px solid rgba(232,0,28,0.4);
+    clip-path: polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);
   }
-  @keyframes scan { 0%{top:0} 100%{top:100vh} }
+  @keyframes splashPulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
 
-  /* ── TITLE ── */
+  /* ═══════════════════════════════════════
+     MOBILE LAYOUT (default)
+  ═══════════════════════════════════════ */
+
+  /* ── TITLE SCREEN ── */
   .title-tag { font-size:10px; letter-spacing:4px; color:var(--red); text-transform:uppercase; margin-bottom:16px; opacity:0; animation:fadeUp .6s ease forwards .2s; }
   .title-main { font-family:'Bebas Neue',sans-serif; font-size:clamp(42px,10vw,80px); letter-spacing:6px; line-height:.9; text-align:center; color:var(--white); text-shadow:4px 4px 0 var(--red-dark),0 0 40px var(--red-glow); opacity:0; animation:fadeUp .6s ease forwards .4s; }
   .title-main span { color:var(--red); }
@@ -91,6 +270,7 @@
   .start-btn:active { transform:scale(.98); }
   .start-btn:disabled { background:var(--gray-dark); color:var(--gray); cursor:default; transform:none; }
   .title-warning { margin-top:16px; font-size:9px; color:var(--gray-dark); letter-spacing:2px; text-align:center; opacity:0; animation:fadeUp .4s ease forwards 1.2s; }
+  .reset-hint { margin-top:10px; font-size:8px; color:var(--gray-dark); letter-spacing:2px; text-align:center; opacity:0; animation:fadeUp .4s ease forwards 1.3s; border-top:1px solid var(--gray-dark); padding-top:10px; max-width:280px; }
 
   /* ── QUIZ ── */
   .quiz-header { width:100%; max-width:480px; display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
@@ -128,6 +308,8 @@
   .next-btn.show { display:block; animation:fadeUp .3s ease; }
   .next-btn:hover { background:var(--red); color:var(--white); }
 
+  .q-reset-hint { margin-top:10px; font-size:8px; color:var(--gray-dark); letter-spacing:2px; text-align:center; }
+
   /* ── RESULT ── */
   .result-tag { font-size:10px; letter-spacing:5px; color:var(--red); margin-bottom:12px; animation:fadeUp .5s ease forwards; }
   .result-grade { font-family:'Bebas Neue',sans-serif; font-size:clamp(80px,20vw,140px); line-height:1; color:var(--white); text-shadow:6px 6px 0 var(--red-dark),0 0 60px var(--red-glow); opacity:0; animation:fadeUp .5s ease forwards .2s; }
@@ -148,7 +330,7 @@
   .skip-btn:hover { border-color:var(--gray); color:var(--gray); }
 
   /* ── MODAL ── */
-  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:200; align-items:center; justify-content:center; }
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:700; align-items:center; justify-content:center; }
   .modal-overlay.active { display:flex; }
   .modal-box { background:var(--black2); border:1px solid var(--red); padding:32px 28px; max-width:280px; width:90%; text-align:center; }
   .modal-text { font-size:11px; letter-spacing:2px; color:var(--white); line-height:2; margin-bottom:24px; }
@@ -166,94 +348,335 @@
   .cleared-btns { display:flex; flex-direction:column; gap:10px; margin-top:28px; width:100%; max-width:300px; opacity:0; animation:fadeUp .6s ease forwards .8s; }
 
   @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ═══════════════════════════════════════
+     DESKTOP MODE OVERRIDES
+  ═══════════════════════════════════════ */
+  body.desktop-mode {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  body.desktop-mode #desktop-bg { display: block; }
+
+  /* Viewport frame — 16:9 */
+  body.desktop-mode #desktop-viewport {
+    position: relative;
+    z-index: 10;
+    width: min(100vw, 177.78vh);  /* 16:9 */
+    height: min(100vh, 56.25vw);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* All screens in desktop mode become panels */
+  body.desktop-mode .screen {
+    min-height: unset;
+    height: 100%;
+    width: 100%;
+    padding: 32px 48px;
+    background: transparent;
+    justify-content: center;
+  }
+
+  /* Quiz card & title content get semi-transparent panel in desktop mode */
+  body.desktop-mode #title-screen > *,
+  body.desktop-mode #quiz-screen > *,
+  body.desktop-mode #result-screen > *,
+  body.desktop-mode #cleared-screen > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  body.desktop-mode #title-screen::before,
+  body.desktop-mode #quiz-screen::before,
+  body.desktop-mode #result-screen::before,
+  body.desktop-mode #cleared-screen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--panel-bg);
+    backdrop-filter: blur(2px);
+    z-index: 1;
+  }
+
+  /* Desktop title sizing */
+  body.desktop-mode .title-main {
+    font-size: clamp(60px, 8vw, 100px);
+  }
+
+  /* Desktop quiz card max-width relaxed */
+  body.desktop-mode .q-card,
+  body.desktop-mode .quiz-header {
+    max-width: 680px;
+  }
+
+  /* Character art strip at bottom of quiz screen — desktop only */
+  body.desktop-mode #quiz-art {
+    display: block;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    height: 35%;
+    background: url('AceG_Ling_PJ3.png') center bottom / contain no-repeat;
+    opacity: 0.18;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* Result & cleared max-width */
+  body.desktop-mode .result-btns,
+  body.desktop-mode .cleared-btns {
+    max-width: 380px;
+  }
+
+  /* ── DESKTOP SPLASH ── */
+  body.desktop-mode #splash-screen {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+  }
 </style>
 </head>
 <body>
 
+<!-- PERSISTENT DESKTOP BACKGROUND -->
+<div id="desktop-bg"></div>
+
+<!-- CORNER DECORATIONS -->
 <div class="corner-tl"></div>
 <div class="corner-br"></div>
 <div class="scanline"></div>
 
-<!-- TITLE -->
-<div class="screen active" id="title-screen">
-  <div class="title-tag">// CLASSIFIED — LEVEL 4 RESTRICTED</div>
-  <div class="title-main">ONE SECOND<br><span>BEFORE</span><br>MIDNIGHT</div>
-  <div class="title-sub">Field Assessment Protocol</div>
-  <div class="title-divider"></div>
-  <div class="title-desc">
-    You have been granted access to<br>
-    <em>classified operational documents.</em><br><br>
-    Read them carefully.<br><br>
-    Answer all 60 questions and there is<br>
-    a tiny surprise waiting for you.
-  </div>
-  <div class="title-progress" id="title-progress"></div>
-  <button class="start-btn" id="start-btn" onclick="startQuiz()">BEGIN ASSESSMENT</button>
-  <div class="title-warning">// 10 QUESTIONS SELECTED AT RANDOM — DOCUMENTS REQUIRED //</div>
+<!-- DEVICE TOGGLE -->
+<div id="device-toggle">
+  <button id="btn-mobile" onclick="setMode('mobile')">MOBILE</button>
+  <button id="btn-desktop" onclick="setMode('desktop')">DESKTOP</button>
 </div>
 
-<!-- QUIZ -->
-<div class="screen" id="quiz-screen">
-  <div class="quiz-header">
-    <div class="q-counter">Q<span id="q-num">1</span></div>
-    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-    <div class="score-display">SCORE <span id="score-now">0</span></div>
+<!-- GALLERY BUTTON -->
+<button id="gallery-btn" onclick="openGallery()">⬡ CONCEPT ART</button>
+
+<!-- GALLERY OVERLAY -->
+<div id="gallery-overlay">
+  <div class="gallery-header">
+    <div class="gallery-title">// CONCEPT <span>ART</span> //</div>
+    <button class="gallery-close" onclick="closeGallery()">✕ CLOSE</button>
   </div>
-  <div class="q-card" id="q-card">
-    <div class="q-category" id="q-category"></div>
-    <div class="q-text" id="q-text"></div>
-    <div class="q-multi-hint" id="q-multi-hint"></div>
-    <div class="options-grid" id="options-grid"></div>
-    <div class="feedback-box" id="feedback-box"></div>
-    <button class="next-btn" id="next-btn" onclick="nextQuestion()">NEXT →</button>
+  <div class="gallery-grid" id="gallery-grid">
+    <!-- populated by JS -->
   </div>
 </div>
 
-<!-- MODAL -->
-<div class="modal-overlay" id="modal-overlay">
-  <div class="modal-box">
-    <div class="modal-text">Are you sure you want to proceed?</div>
-    <div class="modal-btns">
-      <button class="modal-confirm" id="modal-confirm">Confirm</button>
-      <button class="modal-return" onclick="closeModal()">Return</button>
+<!-- DESKTOP VIEWPORT WRAPPER (only used in desktop mode) -->
+<div id="desktop-viewport">
+
+  <!-- DESKTOP SPLASH SCREEN -->
+  <div id="splash-screen">
+    <div class="splash-prompt">PRESS ANY KEY TO CONTINUE</div>
+  </div>
+
+  <!-- TITLE -->
+  <div class="screen active" id="title-screen">
+    <div class="title-tag">// CLASSIFIED — LEVEL 4 RESTRICTED</div>
+    <div class="title-main">ONE SECOND<br><span>BEFORE</span><br>MIDNIGHT</div>
+    <div class="title-sub">Field Assessment Protocol</div>
+    <div class="title-divider"></div>
+    <div class="title-desc">
+      You have been granted access to<br>
+      <em>classified operational documents.</em><br><br>
+      Read them carefully.<br><br>
+      Answer all 60 questions and there is<br>
+      a tiny surprise waiting for you.
+    </div>
+    <div class="title-progress" id="title-progress"></div>
+    <button class="start-btn" id="start-btn" onclick="startQuiz()">BEGIN ASSESSMENT</button>
+    <div class="title-warning">// 10 QUESTIONS SELECTED AT RANDOM — DOCUMENTS REQUIRED //</div>
+    <div class="reset-hint">If you choose to stop interaction, please remember to reset.</div>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="screen" id="quiz-screen">
+    <div id="quiz-art"></div>
+    <div class="quiz-header">
+      <div class="q-counter">Q<span id="q-num">1</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="score-display">SCORE <span id="score-now">0</span></div>
+    </div>
+    <div class="q-card" id="q-card">
+      <div class="q-category" id="q-category"></div>
+      <div class="q-text" id="q-text"></div>
+      <div class="q-multi-hint" id="q-multi-hint"></div>
+      <div class="options-grid" id="options-grid"></div>
+      <div class="feedback-box" id="feedback-box"></div>
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">NEXT →</button>
+    </div>
+    <div class="q-reset-hint">If you choose to stop interaction, please remember to reset.</div>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-text">Are you sure you want to proceed?</div>
+      <div class="modal-btns">
+        <button class="modal-confirm" id="modal-confirm">Confirm</button>
+        <button class="modal-return" onclick="closeModal()">Return</button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- RESULT -->
-<div class="screen" id="result-screen">
-  <div class="result-tag">// ASSESSMENT COMPLETE</div>
-  <div class="result-grade" id="result-grade">B</div>
-  <div class="result-score-line">SCORE: <em id="result-score">0</em> / <em id="result-total">10</em></div>
-  <div class="result-divider"></div>
-  <div class="result-text" id="result-text"></div>
-  <div class="result-remaining" id="result-remaining"></div>
-  <div class="result-btns">
-    <button class="continue-btn" id="continue-btn">NEXT ROUND →</button>
-    <button class="skip-btn" id="skip-btn" onclick="openModal('skip')">SKIP EVERYTHING →</button>
-    <button class="reset-btn" onclick="openModal('reset')">↺ RESET ALL PROGRESS</button>
+  <!-- RESULT -->
+  <div class="screen" id="result-screen">
+    <div class="result-tag">// ASSESSMENT COMPLETE</div>
+    <div class="result-grade" id="result-grade">B</div>
+    <div class="result-score-line">SCORE: <em id="result-score">0</em> / <em id="result-total">10</em></div>
+    <div class="result-divider"></div>
+    <div class="result-text" id="result-text"></div>
+    <div class="result-remaining" id="result-remaining"></div>
+    <div class="result-btns">
+      <button class="continue-btn" id="continue-btn">NEXT ROUND →</button>
+      <button class="skip-btn" id="skip-btn" onclick="openModal('skip')">SKIP EVERYTHING →</button>
+      <button class="reset-btn" onclick="openModal('reset')">↺ RESET ALL PROGRESS</button>
+    </div>
   </div>
-</div>
 
-<!-- CLEARED -->
-<div class="screen" id="cleared-screen">
-  <div class="cleared-icon">✓</div>
-  <div class="cleared-title">BANK CLEARED</div>
-  <div class="result-divider" style="opacity:1;animation:none;"></div>
-  <div class="cleared-text">
-    You have answered all 60 questions.<br><br>
-    It seems like you put effort into answering all the questions.<br>
-    As a reward, you can have the artist's email<br>
-    to talk more about the game.<br><br>
-    <em>acegarantine@berkeley.edu</em><br><br>
-    (Hint: it's the artist's first name + berkeley.edu)
+  <!-- CLEARED -->
+  <div class="screen" id="cleared-screen">
+    <div class="cleared-icon">✓</div>
+    <div class="cleared-title">BANK CLEARED</div>
+    <div class="result-divider" style="opacity:1;animation:none;"></div>
+    <div class="cleared-text">
+      You have answered all 60 questions.<br><br>
+      It seems like you put effort into answering all the questions.<br>
+      As a reward, you can have the artist's email<br>
+      to talk more about the game.<br><br>
+      <em>acegarantine@berkeley.edu</em><br><br>
+      (Hint: it's the artist's first name + berkeley.edu)
+    </div>
+    <div class="cleared-btns">
+      <button class="reset-btn" onclick="openModal('reset')" style="font-size:16px;letter-spacing:4px;border-color:var(--gray);color:var(--gray);">↺ RESET AND START OVER</button>
+    </div>
   </div>
-  <div class="cleared-btns">
-    <button class="reset-btn" onclick="openModal('reset')" style="font-size:16px;letter-spacing:4px;border-color:var(--gray);color:var(--gray);">↺ RESET AND START OVER</button>
-  </div>
-</div>
+
+</div><!-- /desktop-viewport -->
 
 <script>
+// ═══════════════════════════════════════
+// GALLERY DATA
+// To add a new image: append an object to GALLERY_ITEMS
+// { src: 'filename.png', title: 'Display Title' }
+// ═══════════════════════════════════════
+const GALLERY_ITEMS = [
+  { src: 'CoverArt_AceG_Ling.png',  title: 'One Second Before Midnight Cover Art' },
+  { src: 'AceG_Ling_PJ3.png',       title: 'OSBM Character Art' },
+  // Add future items here ↓
+];
+
+// ═══════════════════════════════════════
+// DEVICE MODE
+// ═══════════════════════════════════════
+const MODE_KEY = 'osbm_device_mode';
+
+function detectMode() {
+  const saved = localStorage.getItem(MODE_KEY);
+  if (saved) return saved;
+  // Auto-detect: use pointer coarse (touch) + narrow screen as mobile signal
+  const isTouch = window.matchMedia('(pointer: coarse)').matches;
+  const isNarrow = window.innerWidth < 1024;
+  return (isTouch || isNarrow) ? 'mobile' : 'desktop';
+}
+
+function setMode(mode) {
+  try { localStorage.setItem(MODE_KEY, mode); } catch(e) {}
+  applyMode(mode);
+}
+
+function applyMode(mode) {
+  const body = document.body;
+  const vp = document.getElementById('desktop-viewport');
+  const btnM = document.getElementById('btn-mobile');
+  const btnD = document.getElementById('btn-desktop');
+
+  if (mode === 'desktop') {
+    body.classList.add('desktop-mode');
+    // Wrap screens inside viewport
+    const screens = document.querySelectorAll('.screen, #splash-screen, #modal-overlay');
+    screens.forEach(s => {
+      if (s.parentElement !== vp) vp.appendChild(s);
+    });
+    btnD.classList.add('active');
+    btnM.classList.remove('active');
+    // Show splash if on title screen
+    if (document.getElementById('title-screen').classList.contains('active')) {
+      showSplash();
+    }
+  } else {
+    body.classList.remove('desktop-mode');
+    btnM.classList.add('active');
+    btnD.classList.remove('active');
+    hideSplash();
+  }
+}
+
+// ── SPLASH (desktop only) ──
+function showSplash() {
+  const sp = document.getElementById('splash-screen');
+  sp.classList.add('active');
+  document.addEventListener('keydown', splashDismiss);
+  sp.addEventListener('click', splashDismiss);
+}
+function hideSplash() {
+  const sp = document.getElementById('splash-screen');
+  sp.classList.remove('active');
+  document.removeEventListener('keydown', splashDismiss);
+  sp.removeEventListener('click', splashDismiss);
+}
+function splashDismiss() {
+  hideSplash();
+}
+
+// ═══════════════════════════════════════
+// GALLERY
+// ═══════════════════════════════════════
+function buildGallery() {
+  const grid = document.getElementById('gallery-grid');
+  grid.innerHTML = '';
+  GALLERY_ITEMS.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'gallery-item';
+    el.innerHTML = `
+      <img src="${item.src}" alt="${item.title}" loading="lazy">
+      <div class="gallery-caption">// <em>${item.title}</em> //</div>
+    `;
+    grid.appendChild(el);
+  });
+}
+
+function openGallery() {
+  document.getElementById('gallery-overlay').classList.add('active');
+}
+function closeGallery() {
+  document.getElementById('gallery-overlay').classList.remove('active');
+}
+
+// Close gallery on Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeGallery();
+    closeModal();
+  }
+});
+
+// ═══════════════════════════════════════
+// QUIZ ENGINE
+// ═══════════════════════════════════════
 const STORAGE_KEY = 'osbm_answered_v1';
 const QUESTIONS_PER_ROUND = 10;
 
@@ -634,7 +1057,6 @@ const QUESTIONS = [
     options:["Terrain is purely visual and has no effect on combat","Different terrain affects movement speed, Spirit expenditure, or noise generation — pooled water slows movement; corrosive terrain drains Spirit","Terrain only affects enemies — squad members are completely immune to terrain effects","All terrain effects disappear automatically at the start of combat"],
     correct:[1], multi:false,
     feedback:"<strong>B.</strong> Battlefield terrain is an active combat variable. Pooled water and scattered books slow movement; corrosive terrain (left by Chemistry Prefect attacks) drains Spirit continuously; broken glass generates noise — stepping on it raises the noise level. Positioning and cover matter equally — the ground itself is a battlefield variable that must be managed." }
-
 ];
 
 // ── STATE ──
@@ -656,6 +1078,10 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
+  // Show splash when returning to title in desktop mode
+  if (id === 'title-screen' && document.body.classList.contains('desktop-mode')) {
+    showSplash();
+  }
 }
 
 function updateTitleInfo() {
@@ -749,7 +1175,6 @@ function handleAnswer(chosen) {
 }
 
 function nextQuestion() {
-  // persist this question as answered
   const q = questionSet[currentIndex];
   const answered = getAnswered();
   if (!answered.includes(q.id)) { answered.push(q.id); saveAnswered(answered); }
@@ -808,8 +1233,12 @@ function closeModal() {
   document.getElementById('modal-overlay').classList.remove('active');
 }
 
-// init
+// ── INIT ──
+buildGallery();
 updateTitleInfo();
+const initMode = detectMode();
+applyMode(initMode);
+document.getElementById('btn-' + initMode).classList.add('active');
 </script>
 </body>
 </html>
