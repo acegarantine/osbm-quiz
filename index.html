@@ -266,9 +266,9 @@
   .start-btn:active { transform:scale(.98); }
   .start-btn:disabled { background:var(--gray-dark); color:var(--gray); cursor:default; transform:none; }
   .title-warning { margin-top:16px; font-size:9px; color:var(--gray-dark); letter-spacing:2px; text-align:center; opacity:0; animation:fadeUp .4s ease forwards 1.2s; }
-  .reset-hint { margin-top:14px; font-size:11px; color:var(--red); letter-spacing:2px; text-align:center; opacity:0; animation:fadeUp .4s ease forwards 1.3s; border-top:1px solid var(--red-dark); padding-top:12px; max-width:320px; }
+  .reset-hint { margin-top:14px; font-size:11px; color:#aaa; letter-spacing:2px; text-align:center; opacity:0; animation:fadeUp .4s ease forwards 1.3s; border-top:1px solid #555; padding-top:12px; max-width:320px; }
 
-  .q-reset-hint { margin-top:14px; font-size:11px; color:var(--red); letter-spacing:2px; text-align:center; }
+  .q-reset-hint { margin-top:14px; font-size:11px; color:#aaa; letter-spacing:2px; text-align:center; }
 
   /* ── QUIZ ── */
   .quiz-header { width:100%; max-width:480px; display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
@@ -322,8 +322,8 @@
   .result-btns { display:flex; flex-direction:column; gap:10px; margin-top:28px; width:100%; max-width:300px; opacity:0; animation:fadeUp .5s ease forwards .7s; }
   .continue-btn { padding:13px 40px; background:transparent; border:1px solid var(--red); color:var(--red); font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:5px; cursor:pointer; clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%); transition:background .15s,color .15s; text-align:center; }
   .continue-btn:hover { background:var(--red); color:var(--white); }
-  .reset-btn { padding:10px 40px; background:transparent; border:1px solid var(--gray-dark); color:var(--gray-dark); font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:3px; cursor:pointer; clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%); transition:border-color .15s,color .15s; text-align:center; }
-  .reset-btn:hover { border-color:var(--gray); color:var(--gray); }
+  .reset-btn { padding:10px 40px; background:transparent; border:1px solid #666; color:#aaa; font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:3px; cursor:pointer; clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%); transition:border-color .15s,color .15s; text-align:center; }
+  .reset-btn:hover { border-color:var(--gray); color:var(--white); }
   .skip-btn { padding:10px 40px; background:transparent; border:1px solid var(--gray-dark); color:var(--gray-dark); font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:3px; cursor:pointer; clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%); transition:border-color .15s,color .15s; text-align:center; }
   .skip-btn:hover { border-color:var(--gray); color:var(--gray); }
 
@@ -396,18 +396,38 @@
     background: url('AceG_Ling_PJ3.png') center center / cover no-repeat;
   }
 
-  /* Title screen panel: 100% opaque */
-  body.desktop-mode #title-screen {
-    background: var(--black2);
-    position: relative;
-  }
-
-  /* Quiz / Result / Cleared panels: 75% opaque, bg shows through */
+  /* All desktop screens: transparent, just a flex container to center the panel */
+  body.desktop-mode #title-screen,
   body.desktop-mode #quiz-screen,
   body.desktop-mode #result-screen,
   body.desktop-mode #cleared-screen {
-    background: rgba(17,17,17,0.75);
+    background: transparent;
     position: relative;
+    padding: 0;
+  }
+
+  /* The floating panel — centered vertical card */
+  body.desktop-mode .desktop-panel {
+    width: 480px;
+    max-height: 90%;
+    overflow-y: auto;
+    background: rgba(17,17,17,0.75);
+    border: 1px solid rgba(80,80,80,0.5);
+    border-left: 3px solid var(--red);
+    padding: 36px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    position: relative;
+    z-index: 2;
+    scrollbar-width: none;
+  }
+  body.desktop-mode .desktop-panel::-webkit-scrollbar { display: none; }
+
+  /* Title panel slightly wider */
+  body.desktop-mode #title-screen .desktop-panel {
+    background: rgba(17,17,17,0.95);
   }
 
   /* Remove any pseudo-element overlays */
@@ -420,6 +440,13 @@
   body.desktop-mode #title-screen::before,
   body.desktop-mode #title-screen::after {
     display: none;
+  }
+
+  /* Inside panel, quiz card goes full width */
+  body.desktop-mode .q-card,
+  body.desktop-mode .quiz-header {
+    max-width: 100%;
+    width: 100%;
   }
 
   /* Desktop title sizing */
@@ -485,6 +512,7 @@
 
   <!-- TITLE -->
   <div class="screen active" id="title-screen">
+    <div class="desktop-panel">
     <div class="title-tag">// CLASSIFIED — LEVEL 4 RESTRICTED</div>
     <div class="title-main">ONE SECOND<br><span>BEFORE</span><br>MIDNIGHT</div>
     <div class="title-sub">Field Assessment Protocol</div>
@@ -500,10 +528,12 @@
     <button class="start-btn" id="start-btn" onclick="startQuiz()">BEGIN ASSESSMENT</button>
     <div class="title-warning">// 10 QUESTIONS SELECTED AT RANDOM — DOCUMENTS REQUIRED //</div>
     <div class="reset-hint">If you choose to stop interaction, please remember to reset.</div>
+    </div>
   </div>
 
   <!-- QUIZ -->
   <div class="screen" id="quiz-screen">
+    <div class="desktop-panel">
     <div id="quiz-art"></div>
     <div class="quiz-header">
       <div class="q-counter">Q<span id="q-num">1</span></div>
@@ -520,6 +550,7 @@
     </div>
     <div class="q-reset-hint">If you choose to stop interaction, please remember to reset.</div>
     <button class="reset-btn" style="margin-top:10px;width:100%;max-width:480px;" onclick="openModal('reset')">↺ RESET ALL PROGRESS</button>
+    </div>
   </div>
 
   <!-- MODAL -->
@@ -535,6 +566,7 @@
 
   <!-- RESULT -->
   <div class="screen" id="result-screen">
+    <div class="desktop-panel">
     <div class="result-tag">// ASSESSMENT COMPLETE</div>
     <div class="result-grade" id="result-grade">B</div>
     <div class="result-score-line">SCORE: <em id="result-score">0</em> / <em id="result-total">10</em></div>
@@ -546,10 +578,12 @@
       <button class="skip-btn" id="skip-btn" onclick="openModal('skip')">SKIP EVERYTHING →</button>
       <button class="reset-btn" onclick="openModal('reset')">↺ RESET ALL PROGRESS</button>
     </div>
+    </div>
   </div>
 
   <!-- CLEARED -->
   <div class="screen" id="cleared-screen">
+    <div class="desktop-panel">
     <div class="cleared-icon">✓</div>
     <div class="cleared-title">BANK CLEARED</div>
     <div class="result-divider" style="opacity:1;animation:none;"></div>
@@ -563,6 +597,7 @@
     </div>
     <div class="cleared-btns">
       <button class="reset-btn" onclick="openModal('reset')" style="font-size:16px;letter-spacing:4px;border-color:var(--gray);color:var(--gray);">↺ RESET AND START OVER</button>
+    </div>
     </div>
   </div>
 
