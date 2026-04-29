@@ -54,13 +54,13 @@
     z-index: 0;
   }
 
-  /* ── DESKTOP BACKGROUND (persistent cover art) ── */
+  /* ── DESKTOP BACKGROUND (character art — quiz screens only) ── */
   #desktop-bg {
     display: none;
     position: fixed;
     inset: 0;
     z-index: 0;
-    background: var(--black) url('CoverArt_AceG_Ling.png') center center / cover no-repeat;
+    background: var(--black);
   }
 
   /* ── CORNER DECORATIONS ── */
@@ -217,18 +217,18 @@
   .screen.active { display: flex; }
 
   /* ═══════════════════════════════════════
-     DESKTOP SPLASH SCREEN
+     DESKTOP SPLASH SCREEN (one-time, cover art full bleed)
   ═══════════════════════════════════════ */
   #splash-screen {
     position: fixed;
     inset: 0;
     z-index: 600;
     display: none;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
     flex-direction: column;
     cursor: pointer;
-    background: transparent;
+    background: #000 url('CoverArt_AceG_Ling.png') center center / cover no-repeat;
   }
   #splash-screen.active { display: flex; }
 
@@ -238,12 +238,13 @@
     letter-spacing: 10px;
     color: var(--white);
     text-shadow: 0 0 30px rgba(232,0,28,0.8);
-    opacity: 0;
     animation: splashPulse 2s ease-in-out infinite;
-    margin-top: 60vh;
-    background: rgba(0,0,0,0.5);
-    padding: 12px 32px;
-    border: 1px solid rgba(232,0,28,0.4);
+    margin-bottom: 6vh;
+    margin-right: auto;
+    margin-left: auto;
+    background: rgba(0,0,0,0.6);
+    padding: 14px 40px;
+    border: 1px solid rgba(232,0,28,0.5);
     clip-path: polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);
   }
   @keyframes splashPulse {
@@ -270,7 +271,9 @@
   .start-btn:active { transform:scale(.98); }
   .start-btn:disabled { background:var(--gray-dark); color:var(--gray); cursor:default; transform:none; }
   .title-warning { margin-top:16px; font-size:9px; color:var(--gray-dark); letter-spacing:2px; text-align:center; opacity:0; animation:fadeUp .4s ease forwards 1.2s; }
-  .reset-hint { margin-top:10px; font-size:8px; color:var(--gray-dark); letter-spacing:2px; text-align:center; opacity:0; animation:fadeUp .4s ease forwards 1.3s; border-top:1px solid var(--gray-dark); padding-top:10px; max-width:280px; }
+  .reset-hint { margin-top:14px; font-size:11px; color:var(--red); letter-spacing:2px; text-align:center; opacity:0; animation:fadeUp .4s ease forwards 1.3s; border-top:1px solid var(--red-dark); padding-top:12px; max-width:320px; }
+
+  .q-reset-hint { margin-top:14px; font-size:11px; color:var(--red); letter-spacing:2px; text-align:center; }
 
   /* ── QUIZ ── */
   .quiz-header { width:100%; max-width:480px; display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
@@ -384,7 +387,7 @@
     justify-content: center;
   }
 
-  /* Quiz card & title content get semi-transparent panel in desktop mode */
+  /* Quiz card & title content sit above bg */
   body.desktop-mode #title-screen > *,
   body.desktop-mode #quiz-screen > *,
   body.desktop-mode #result-screen > *,
@@ -393,16 +396,30 @@
     z-index: 2;
   }
 
-  body.desktop-mode #title-screen::before,
-  body.desktop-mode #quiz-screen::before,
-  body.desktop-mode #result-screen::before,
-  body.desktop-mode #cleared-screen::before {
+  /* Quiz screen: character art as full 100% bg, panel at 75% opacity */
+  body.desktop-mode #quiz-screen {
+    position: relative;
+  }
+  body.desktop-mode #quiz-screen::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: var(--panel-bg);
-    backdrop-filter: blur(2px);
+    background: url('AceG_Ling_PJ3.png') center center / cover no-repeat;
+    z-index: 0;
+  }
+  body.desktop-mode #quiz-screen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(10,10,10,0.75);
     z-index: 1;
+  }
+
+  /* Title, result, cleared: plain dark bg */
+  body.desktop-mode #title-screen,
+  body.desktop-mode #result-screen,
+  body.desktop-mode #cleared-screen {
+    background: rgba(10,10,10,0.95);
   }
 
   /* Desktop title sizing */
@@ -416,19 +433,8 @@
     max-width: 680px;
   }
 
-  /* Character art strip at bottom of quiz screen — desktop only */
-  body.desktop-mode #quiz-art {
-    display: block;
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    left: 0;
-    height: 35%;
-    background: url('AceG_Ling_PJ3.png') center bottom / contain no-repeat;
-    opacity: 0.18;
-    z-index: 1;
-    pointer-events: none;
-  }
+  /* (quiz bg handled by ::before/::after in desktop mode) */
+  #quiz-art { display: none; }
 
   /* Result & cleared max-width */
   body.desktop-mode .result-btns,
@@ -436,13 +442,7 @@
     max-width: 380px;
   }
 
-  /* ── DESKTOP SPLASH ── */
-  body.desktop-mode #splash-screen {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    inset: 0;
-  }
+  /* (splash is fixed fullscreen, no viewport override needed) */
 </style>
 </head>
 <body>
@@ -625,8 +625,12 @@ function applyMode(mode) {
   }
 }
 
-// ── SPLASH (desktop only) ──
+// ── SPLASH (desktop only, one-time per session) ──
+const SPLASH_KEY = 'osbm_splash_seen';
+
 function showSplash() {
+  // Only show once per session
+  try { if (sessionStorage.getItem(SPLASH_KEY)) return; } catch(e) {}
   const sp = document.getElementById('splash-screen');
   sp.classList.add('active');
   document.addEventListener('keydown', splashDismiss);
@@ -639,6 +643,7 @@ function hideSplash() {
   sp.removeEventListener('click', splashDismiss);
 }
 function splashDismiss() {
+  try { sessionStorage.setItem(SPLASH_KEY, '1'); } catch(e) {}
   hideSplash();
 }
 
@@ -1078,10 +1083,6 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
-  // Show splash when returning to title in desktop mode
-  if (id === 'title-screen' && document.body.classList.contains('desktop-mode')) {
-    showSplash();
-  }
 }
 
 function updateTitleInfo() {
