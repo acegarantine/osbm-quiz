@@ -224,9 +224,8 @@
     inset: 0;
     z-index: 600;
     display: none;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
-    flex-direction: column;
     cursor: pointer;
     background: #000 url('CoverArt_AceG_Ling.png') center center / cover no-repeat;
   }
@@ -239,9 +238,11 @@
     color: var(--white);
     text-shadow: 0 0 30px rgba(232,0,28,0.8);
     animation: splashPulse 2s ease-in-out infinite;
-    margin-bottom: 6vh;
-    margin-right: auto;
-    margin-left: auto;
+    position: absolute;
+    bottom: 4vh;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
     background: rgba(0,0,0,0.6);
     padding: 14px 40px;
     border: 1px solid rgba(232,0,28,0.5);
@@ -396,30 +397,33 @@
     z-index: 2;
   }
 
-  /* Quiz screen: character art as full 100% bg, panel at 75% opacity */
-  body.desktop-mode #quiz-screen {
+  /* All desktop screens: character art bg at 100%, single 75% dark overlay */
+  body.desktop-mode #quiz-screen,
+  body.desktop-mode #result-screen,
+  body.desktop-mode #cleared-screen,
+  body.desktop-mode #title-screen {
     position: relative;
+    background: transparent;
   }
-  body.desktop-mode #quiz-screen::before {
+  body.desktop-mode #quiz-screen::before,
+  body.desktop-mode #result-screen::before,
+  body.desktop-mode #cleared-screen::before,
+  body.desktop-mode #title-screen::before {
     content: '';
     position: absolute;
     inset: 0;
     background: url('AceG_Ling_PJ3.png') center center / cover no-repeat;
     z-index: 0;
   }
-  body.desktop-mode #quiz-screen::after {
+  body.desktop-mode #quiz-screen::after,
+  body.desktop-mode #result-screen::after,
+  body.desktop-mode #cleared-screen::after,
+  body.desktop-mode #title-screen::after {
     content: '';
     position: absolute;
     inset: 0;
     background: rgba(10,10,10,0.75);
     z-index: 1;
-  }
-
-  /* Title, result, cleared: plain dark bg */
-  body.desktop-mode #title-screen,
-  body.desktop-mode #result-screen,
-  body.desktop-mode #cleared-screen {
-    background: rgba(10,10,10,0.95);
   }
 
   /* Desktop title sizing */
@@ -576,6 +580,7 @@
 const GALLERY_ITEMS = [
   { src: 'CoverArt_AceG_Ling.png',  title: 'One Second Before Midnight Cover Art' },
   { src: 'AceG_Ling_PJ3.png',       title: 'OSBM Character Art' },
+  { src: 'BG2.png',                  title: 'OSBM Vehicle Concept Art' },
   // Add future items here ↓
 ];
 
@@ -625,12 +630,9 @@ function applyMode(mode) {
   }
 }
 
-// ── SPLASH (desktop only, one-time per session) ──
-const SPLASH_KEY = 'osbm_splash_seen';
-
+// ── SPLASH (desktop only, shows every time including after reset) ──
 function showSplash() {
-  // Only show once per session
-  try { if (sessionStorage.getItem(SPLASH_KEY)) return; } catch(e) {}
+  if (!document.body.classList.contains('desktop-mode')) return;
   const sp = document.getElementById('splash-screen');
   sp.classList.add('active');
   document.addEventListener('keydown', splashDismiss);
@@ -643,7 +645,6 @@ function hideSplash() {
   sp.removeEventListener('click', splashDismiss);
 }
 function splashDismiss() {
-  try { sessionStorage.setItem(SPLASH_KEY, '1'); } catch(e) {}
   hideSplash();
 }
 
@@ -1219,6 +1220,7 @@ function resetProgress() {
   try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
   showScreen('title-screen');
   updateTitleInfo();
+  showSplash();
 }
 
 function openModal(action) {
@@ -1240,6 +1242,7 @@ updateTitleInfo();
 const initMode = detectMode();
 applyMode(initMode);
 document.getElementById('btn-' + initMode).classList.add('active');
+if (initMode === 'desktop') showSplash();
 </script>
 </body>
 </html>
