@@ -604,6 +604,16 @@
     </div>
   </div>
 
+  <!-- IDLE RESET MODAL -->
+  <div class="modal-overlay" id="idle-modal">
+    <div class="modal-box">
+      <div class="modal-text">// NO ACTIVITY DETECTED //<br><br>Resetting in <em id="idle-countdown" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--red);">30</em> seconds.<br><br>Move mouse or tap to cancel.</div>
+      <div class="modal-btns">
+        <button class="modal-return" onclick="cancelIdleReset()">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
   <!-- RESULT -->
   <div class="screen" id="result-screen">
     <div class="desktop-panel">
@@ -1156,6 +1166,7 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
+  resetIdleTimer();
 }
 
 function updateTitleInfo() {
@@ -1308,6 +1319,71 @@ function closeModal() {
   document.getElementById('modal-overlay').classList.remove('active');
 }
 
+// ── IDLE AUTO-RESET ──
+const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+const IDLE_COUNTDOWN = 30;           // seconds
+let idleTimer = null;
+let countdownTimer = null;
+let countdownValue = IDLE_COUNTDOWN;
+
+function getActiveScreen() {
+  const active = document.querySelector('.screen.active');
+  return active ? active.id : null;
+}
+
+function idleShouldWatch() {
+  const screen = getActiveScreen();
+  const isDesktop = document.body.classList.contains('desktop-mode');
+  const splashVisible = document.getElementById('splash-screen').classList.contains('active');
+
+  // Desktop: don't watch on splash
+  if (isDesktop && splashVisible) return false;
+  // Mobile: don't watch on title screen
+  if (!isDesktop && screen === 'title-screen') return false;
+  // Don't watch if no screen active or on title in desktop
+  if (!screen) return false;
+  return true;
+}
+
+function resetIdleTimer() {
+  // If idle modal is showing, cancel it
+  const idleModal = document.getElementById('idle-modal');
+  if (idleModal.classList.contains('active')) {
+    cancelIdleReset();
+    return;
+  }
+  clearTimeout(idleTimer);
+  if (!idleShouldWatch()) return;
+  idleTimer = setTimeout(startIdleCountdown, IDLE_TIMEOUT);
+}
+
+function startIdleCountdown() {
+  if (!idleShouldWatch()) return;
+  countdownValue = IDLE_COUNTDOWN;
+  document.getElementById('idle-countdown').textContent = countdownValue;
+  document.getElementById('idle-modal').classList.add('active');
+  countdownTimer = setInterval(() => {
+    countdownValue--;
+    document.getElementById('idle-countdown').textContent = countdownValue;
+    if (countdownValue <= 0) {
+      clearInterval(countdownTimer);
+      document.getElementById('idle-modal').classList.remove('active');
+      resetProgress();
+    }
+  }, 1000);
+}
+
+function cancelIdleReset() {
+  clearInterval(countdownTimer);
+  document.getElementById('idle-modal').classList.remove('active');
+  resetIdleTimer();
+}
+
+// Activity listeners
+['mousemove','mousedown','keydown','touchstart','touchmove','scroll'].forEach(evt => {
+  document.addEventListener(evt, resetIdleTimer, { passive: true });
+});
+
 // ── INIT ──
 buildGallery();
 updateTitleInfo();
@@ -1315,6 +1391,7 @@ const initMode = detectMode();
 applyMode(initMode);
 document.getElementById('btn-' + initMode).classList.add('active');
 if (initMode === 'desktop') showSplash();
+resetIdleTimer();
 </script>
 </body>
 </html>
